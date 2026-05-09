@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -131,8 +132,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# For WhiteNoise - serve compressed static files
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# For WhiteNoise - use simpler storage
+STATICFILES_STORAGE = "whitenoise.storage.WhiteNoiseStorage"
 
 
 # REST Framework settings
