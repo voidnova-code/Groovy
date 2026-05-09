@@ -1,5 +1,5 @@
 # Django
-Django>=5.0,<6.0
+Django>=5.1,<5.2
 
 # Database
 psycopg2-binary>=2.9.9
