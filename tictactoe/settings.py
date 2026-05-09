@@ -20,7 +20,12 @@ SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(50).hex())
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Get allowed hosts from environment
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# Add your Render domain here: ALLOWED_HOSTS=localhost,127.0.0.1,groovy-jhay.onrender.com
+hosts_from_env = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
+host_list = [h.strip() for h in hosts_from_env.split(",") if h.strip()]
+
+# Allow all onrender.com subdomains for flexibility
+ALLOWED_HOSTS = host_list + [".onrender.com"]
 
 
 # Application definition
