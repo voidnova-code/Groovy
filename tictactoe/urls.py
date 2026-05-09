@@ -68,6 +68,7 @@ urlpatterns = [
     path("admin/feedbacks/", page_views.admin_feedbacks, name="admin_feedbacks"),
     path("admin/settings/", page_views.admin_settings, name="admin_settings"),
     path("admin/clear-data/", page_views.admin_clear_data, name="admin_clear_data"),
+    path("admin/google-auth/", page_views.admin_google_auth, name="admin_google_auth"),
     path("admin/logs/", page_views.admin_logs, name="admin_logs"),
 
     # Export

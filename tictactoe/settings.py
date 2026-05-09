@@ -29,7 +29,8 @@ ALLOWED_HOSTS = host_list + [
     ".vercel.app",
     ".onrender.com",
     "localhost",
-    "127.0.0.1"
+    "127.0.0.1",
+    "testserver",  # For Django test client
 ]
 
 

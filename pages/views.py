@@ -290,3 +290,65 @@ def admin_logs(request):
     # Mock logs - in production, create a Log model
     logs = []
     return render(request, 'admin/logs.html', {'logs': logs})
+
+
+def admin_google_auth(request):
+    """Handle Google OAuth for admin login"""
+    from django.http import JsonResponse
+    from django.contrib.auth import login
+    from game.auth_google import GoogleAuthHandler
+    import json
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            auth_code = data.get('auth_code')
+            redirect_uri = data.get('redirect_uri')
+
+            if not auth_code or not redirect_uri:
+                return JsonResponse(
+                    {'error': 'Missing auth_code or redirect_uri'},
+                    status=400
+                )
+
+            handler = GoogleAuthHandler()
+            user_data, tokens, error = handler.authenticate_with_google(
+                auth_code,
+                redirect_uri,
+                email_to_link=None
+            )
+
+            if error:
+                return JsonResponse({'error': error}, status=400)
+
+            # Get the user object
+            try:
+                user = User.objects.get(id=user_data['id'])
+                
+                # Check if superuser
+                if not user.is_superuser:
+                    return JsonResponse(
+                        {'error': 'Only admin users can access this panel'},
+                        status=403
+                    )
+                
+                # Create Django session (not JWT for admin)
+                login(request, user)
+                
+                return JsonResponse({
+                    'success': True,
+                    'user': user_data,
+                    'redirect': '/admin/dashboard/'
+                })
+            except User.DoesNotExist:
+                return JsonResponse(
+                    {'error': 'User account not found'},
+                    status=404
+                )
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

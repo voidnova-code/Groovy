@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - GROOVY</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Righteous&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -105,6 +106,57 @@
             text-decoration: underline;
         }
         input[name="csrfmiddlewaretoken"] { display: none; }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0 20px 0;
+            gap: 10px;
+        }
+        .divider-line {
+            flex: 1;
+            height: 2px;
+            background: var(--dark-brown);
+        }
+        .divider-text {
+            color: var(--dark-brown);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .google-btn-container {
+            margin-top: 20px;
+        }
+        .btn-google {
+            width: 100%;
+            padding: 12px 16px;
+            border: 3px solid #4285F4;
+            background: white;
+            color: #4285F4;
+            font-family: 'Righteous', cursive;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn-google:hover {
+            background: #4285F4;
+            color: white;
+            transform: translate(-3px, -3px);
+            box-shadow: 4px 4px 0 #4285F4;
+        }
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+        #g_id_onload {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -129,9 +181,150 @@
             <button type="submit" class="btn-submit">Login</button>
         </form>
 
+        <div class="divider">
+            <div class="divider-line"></div>
+            <div class="divider-text">OR</div>
+            <div class="divider-line"></div>
+        </div>
+
+        <div class="google-btn-container">
+            <button type="button" class="btn-google" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+            </button>
+        </div>
+
         <div class="back-link">
             <a href="/">Back to Game</a>
         </div>
     </div>
-</body>
-</html>
+
+    <script>
+        // Initialize Google Sign-In
+        let googleClientId = null;
+
+        // Fetch Google Client ID on page load
+        async function initGoogleSignIn() {
+            try {
+                const response = await fetch('/api/auth/google/config/');
+                if (response.ok) {
+                    const data = await response.json();
+                    googleClientId = data.client_id;
+                    console.log('Google Sign-In initialized');
+                } else {
+                    console.warn('Google OAuth not configured');
+                    document.getElementById('googleSignInBtn').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching Google config:', error);
+                document.getElementById('googleSignInBtn').style.display = 'none';
+            }
+        }
+
+        // Handle Google Sign-In button click
+        async function handleGoogleSignIn() {
+            if (!googleClientId) {
+                alert('Google Sign-In is not configured. Please contact administrator.');
+                return;
+            }
+
+            // Create OAuth flow
+            try {
+                // Step 1: Redirect to Google OAuth consent screen
+                const redirectUri = window.location.origin + '/admin/login/';
+                const scope = 'openid email profile';
+                const responseType = 'code';
+                const accessType = 'offline';
+                
+                const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+                authUrl.searchParams.append('client_id', googleClientId);
+                authUrl.searchParams.append('redirect_uri', redirectUri);
+                authUrl.searchParams.append('response_type', responseType);
+                authUrl.searchParams.append('scope', scope);
+                authUrl.searchParams.append('access_type', accessType);
+                authUrl.searchParams.append('prompt', 'consent');
+
+                // Store the redirect URI in sessionStorage
+                sessionStorage.setItem('googleLoginRedirectUri', redirectUri);
+                
+                // Redirect to Google
+                window.location.href = authUrl.toString();
+            } catch (error) {
+                console.error('Error initiating Google Sign-In:', error);
+                alert('Error starting Google Sign-In. Please try again.');
+            }
+        }
+
+        // Handle OAuth callback
+        async function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const redirectUri = sessionStorage.getItem('googleLoginRedirectUri');
+
+            if (code) {
+                try {
+                    // Show loading message
+                    const submitBtn = document.querySelector('.btn-submit');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.textContent = 'Processing...';
+                    submitBtn.disabled = true;
+
+                    // Step 2: Exchange auth code for tokens
+                    const response = await fetch('/admin/google-auth/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            auth_code: code,
+                            redirect_uri: redirectUri || window.location.origin + '/admin/login/'
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Session is already created by Django
+                        // Just redirect to dashboard
+                        window.location.href = data.redirect;
+                    } else {
+                        const error = await response.json();
+                        alert('Login failed: ' + (error.error || 'Unknown error'));
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error during OAuth callback:', error);
+                    alert('Error processing login. Please try again.');
+                }
+            }
+        }
+
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initGoogleSignIn();
+            handleOAuthCallback();
+        });
+    </script>
