@@ -135,13 +135,18 @@ async function joinRoom() {
             },
             body: JSON.stringify({ room_code: code })
         });
+        console.log('Join response:', response.status);
         if (response.ok) {
+            const data = await response.json();
+            console.log('Room joined:', data);
             window.location.href = '{% url "game" %}?code=' + code;
         } else {
             const data = await response.json();
+            console.error('Join error:', data);
             alert(data.error || 'Nope! That room is a ghost town.');
         }
     } catch (err) {
+        console.error('Join exception:', err);
         alert('The room is in another castle! Try a different code.');
     }
 }

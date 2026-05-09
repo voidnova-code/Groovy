@@ -151,6 +151,12 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        if room.player_o and room.player_o != request.user:
+            return Response(
+                {"error": "Room is full"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if room.status != "waiting":
             return Response(
                 {"error": "Room is not available for joining"},
