@@ -7,13 +7,11 @@ build {
 # Build command: yarn build (if using yarn) or npm run build (if using npm)
 # If your app has a package.json with a build script, run that
 
-# Build command - install dependencies and run migrations
-buildCommand = """
-pip install -r requirements.txt
-python manage.py migrate --noinput
-python manage.py collectstatic --noinput
-# NOTE: creating a default superuser during build is insecure; create one manually
-"""
+# Build command - install dependencies and collect static files
+# Note: migrations are intentionally omitted here to avoid deployments
+# failing when the database is unreachable during build. Run migrations
+# manually from the Render shell after the service is deployed.
+buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 # Start command - what runs when the container starts
 startCommand = "gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=2 --bind=0.0.0.0:$PORT"
