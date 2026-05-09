@@ -109,6 +109,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Default primary key field
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
 # Password hashers - fallback to default for old passwords
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -131,8 +135,11 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Use Django's default static files storage
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.staticfiles_storage"
+# Static files - use simple manifest storage
+STORAGES = {
+    "default": "django.core.files.storage.FileSystemStorage",
+    "staticfiles": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+}
 
 
 # REST Framework settings
