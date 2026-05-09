@@ -994,6 +994,17 @@
             <button class="btn-white" onclick="backToDashboard()" style="width: 100%;">Back</button>
         </div>
 
+        <!-- Rematch Request Modal -->
+        <div id="rematch-modal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-emoji">&#128578;</div>
+                <div class="modal-title">Rematch Request!</div>
+                <p class="modal-message" id="rematch-message">Your opponent wants a rematch!</p>
+                <button class="btn-turquoise" onclick="acceptRematch()" style="width: 100%;">Accept</button>
+                <button class="btn-white" onclick="declineRematch()" style="width: 100%; margin-top: 10px;">Decline</button>
+            </div>
+        </div>
+
         <!-- Waiting Section -->
         <div id="waiting-section" class="section">
             <h2>Summoning an Opponent</h2>
@@ -1096,6 +1107,7 @@
         let currentUser = null;
         let accessToken = localStorage.getItem('access');
         let currentRoomCode = null;
+        let currentRoomData = null;
         let pollInterval = null;
         let scores = JSON.parse(localStorage.getItem('ttt_scores')) || { x: 0, o: 0, draw: 0 };
         let selectedDonation = 0;
@@ -1346,6 +1358,11 @@
         }
 
         function updateGameUI(data) {
+            currentRoomData = data;
+
+            // Check for rematch request
+            checkRematchRequest(data);
+
             document.getElementById('player-x-name').textContent = data.player_x_username;
             document.getElementById('player-o-name').textContent = data.player_o_username || 'Waiting...';
 
@@ -1417,11 +1434,29 @@
             document.getElementById('modal-emoji').textContent = isDraw ? '&#129309;' : (isWin ? '&#127881;' : '&#128542;');
             document.getElementById('modal-message').textContent = isDraw ? 'Well, that was TENSE!' : (isWin ? 'You absolute legend!' : 'Better luck next time, champ!');
             document.getElementById('modal').classList.add('active');
+
+            // Add rematch button for game creator (player_x)
+            const isCreator = currentUser.id === currentRoomData.player_x;
+            if (isCreator) {
+                // Replace Back button with Request Rematch button
+                const btnContainer = document.querySelector('#modal .btn-turquoise').parentElement;
+                const btnRow = btnContainer.querySelector('.btn-row') || document.createElement('div');
+                btnRow.innerHTML = `
+                    <button class="btn-turquoise" onclick="closeModalAndRematch()" style="width: 100%;">Request Rematch</button>
+                    <button class="btn-white" onclick="modalBackToDashboard()" style="width: 100%; margin-top: 10px;">Back to Dashboard</button>
+                `;
+            }
+        }
+
+        function closeModalAndRematch() {
+            document.getElementById('modal').classList.remove('active');
+            requestRematch();
         }
 
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
-            showDashboard();
+            // Stay in game room - show waiting state
+            showGame(currentRoomCode);
         }
 
         function modalBackToDashboard() {
@@ -1634,6 +1669,88 @@
                 }
             } catch (err) {
                 alert('The void didn\'t accept it. Try again!');
+            }
+        }
+
+        // Rematch functions
+        async function requestRematch() {
+            if (!currentRoomCode) return;
+
+            try {
+                const response = await fetch(API_URL + 'rooms/rematch/request/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ room_code: currentRoomCode })
+                });
+
+                if (response.ok) {
+                    document.getElementById('turn-indicator').textContent = 'Waiting for opponent...';
+                    document.getElementById('turn-indicator').className = 'turn-indicator waiting';
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Couldn\'t send rematch request!');
+                }
+            } catch (err) {
+                alert('The void didn\'t accept it. Try again!');
+            }
+        }
+
+        async function acceptRematch() {
+            if (!currentRoomCode) return;
+
+            try {
+                const response = await fetch(API_URL + 'rooms/rematch/accept/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ room_code: currentRoomCode })
+                });
+
+                if (response.ok) {
+                    document.getElementById('rematch-modal').classList.remove('active');
+                    const data = await response.json();
+                    updateGameUI(data);
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Couldn\'t accept rematch!');
+                }
+            } catch (err) {
+                alert('The void didn\'t accept it. Try again!');
+            }
+        }
+
+        async function declineRematch() {
+            if (!currentRoomCode) return;
+
+            try {
+                const response = await fetch(API_URL + 'rooms/rematch/decline/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ room_code: currentRoomCode })
+                });
+
+                document.getElementById('rematch-modal').classList.remove('active');
+            } catch (err) {
+                console.error('Decline failed');
+            }
+        }
+
+        // Check for rematch request and show modal
+        function checkRematchRequest(data) {
+            const isPlayerO = currentUser.id === data.player_o;
+            if (data.rematch_requested && isPlayerO && data.status === 'finished') {
+                document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants a rematch!';
+                document.getElementById('rematch-modal').classList.add('active');
+            } else if (data.rematch_requested && !isPlayerO && data.status === 'finished') {
+                document.getElementById('turn-indicator').textContent = 'Waiting for opponent to accept...';
             }
         }
 

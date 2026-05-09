@@ -4,6 +4,10 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+def default_board_state():
+    return ["", "", "", "", "", "", "", "", ""]
+
+
 class GameRoom(models.Model):
     STATUS_CHOICES = [
         ("waiting", "Waiting for opponent"),
@@ -24,16 +28,23 @@ class GameRoom(models.Model):
     )
     is_draw = models.BooleanField(default=False)
     current_turn = models.CharField(max_length=1, default="X")
-    board_state = models.JSONField(default=list)
+    board_state = models.JSONField(default=default_board_state)
+    rematch_requested = models.BooleanField(default=False)
+    rematch_requested_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True, related_name="rematch_requested"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.code:
             self.code = self.generate_unique_code()
-        if not self.board_state:
-            self.board_state = ["", "", "", "", "", "", "", "", ""]
+        if not self.board_state or len(self.board_state) != 9:
+            self.board_state = default_board_state()
         super().save(*args, **kwargs)
+
+    def reset_board(self):
+        self.board_state = default_board_state()
 
     def generate_unique_code(self):
         while True:
@@ -55,7 +66,7 @@ class GameRoom(models.Model):
         return None
 
     def check_draw(self):
-        return all(cell != "" for cell in self.board_state)
+        return len(self.board_state) == 9 and all(cell != "" for cell in self.board_state)
 
     def make_move(self, position, player):
         if self.status != "playing":

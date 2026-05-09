@@ -45,9 +45,9 @@ def admin_dashboard(request):
     recent_games = GameRoom.objects.order_by('-created_at')[:10]
 
     # Top winners
-    top_winners = User.objects.filter(winner__isnull=False).annotate(
-        wins=Count('wins')
-    ).order_by('-wins')[:5]
+    top_winners = User.objects.annotate(
+        win_count=Count('wins')
+    ).filter(win_count__gt=0).order_by('-win_count')[:5]
 
     # Most active players
     most_active = User.objects.annotate(
@@ -176,6 +176,8 @@ def delete_user(request, user_id):
     if request.method == 'POST':
         try:
             user = User.objects.get(id=user_id)
+            if user.is_superuser or user.id == request.user.id:
+                return redirect('admin_users')
             # Delete related games
             GameRoom.objects.filter(player_x=user).delete()
             GameRoom.objects.filter(player_o=user).delete()

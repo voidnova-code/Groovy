@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - GROOVY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Righteous&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pink: #FF6B6B;
+            --turquoise: #4ECDC4;
+            --yellow: #FFE66D;
+            --cream: #FFF5E6;
+            --dark-brown: #2C1810;
+        }
+        body {
+            font-family: 'Righteous', cursive;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, var(--cream), #FFD6E0, #D6F0FF, #D6FFE8, var(--cream));
+            background-size: 400% 400%;
+            animation: rainbowBg 10s ease infinite;
+        }
+        @keyframes rainbowBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container {
+            background: white;
+            border: 5px solid var(--dark-brown);
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            transform: rotate(-1deg);
+            box-shadow: 8px 8px 0 var(--pink), 12px 12px 0 var(--turquoise);
+        }
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5em;
+            text-align: center;
+            color: var(--pink);
+            text-shadow: 3px 3px 0 var(--yellow), 5px 5px 0 var(--dark-brown);
+            margin-bottom: 25px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--dark-brown);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            background: var(--cream);
+        }
+        input:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 var(--pink);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px 24px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            background: var(--pink);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+        .error {
+            background: var(--pink);
+            color: white;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 3px solid var(--dark-brown);
+            display: none;
+        }
+        .error.show { display: block; }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: var(--turquoise);
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        input[name="csrfmiddlewaretoken"] { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Admin Login</div>
+
+        {% if error %}
+        <div class="error show">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" id="id_username" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" id="id_password" required>
+            </div>
+            <input type="hidden" name="next" value="/admin/dashboard/">
+            <button type="submit" class="btn-submit">Login</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/">Back to Game</a>
+        </div>
+    </div>
+</body>
+</html>

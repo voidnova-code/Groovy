@@ -30,7 +30,6 @@ ALLOWED_HOSTS = host_list + [".onrender.com"]
 
 # Application definition
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -130,6 +129,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Login URLs - use custom admin login
+LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/admin/dashboard/"
+LOGOUT_REDIRECT_URL = "/"
 
 # Media files
 MEDIA_URL = "media/"

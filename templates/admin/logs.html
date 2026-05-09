@@ -3,40 +3,166 @@
 
 {% block title %}Activity Logs - GROOVY Admin{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-.log-entry {
-    padding: 12px 15px;
-    border: 2px solid var(--dark-brown);
-    margin-bottom: 10px;
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.admin-header h2 {
+    margin-bottom: 0;
+}
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+.admin-nav a {
+    padding: 12px 20px;
+    background: var(--turquoise);
+    color: white;
+    border: 3px solid var(--dark-brown);
+    text-decoration: none;
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.admin-nav a:hover {
+    transform: translate(-3px, -3px) rotate(2deg);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.admin-nav a.active {
+    background: var(--pink);
+    transform: rotate(-1deg);
+}
+.filter-form {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.filter-form select {
+    padding: 14px 18px;
+    border: 3px solid var(--dark-brown);
+    font-family: 'Righteous', cursive;
     background: white;
+    cursor: pointer;
+    min-width: 150px;
+}
+.filter-form select:focus {
+    outline: none;
+    box-shadow: 3px 3px 0 var(--pink);
+}
+.log-entry {
+    padding: 18px 20px;
+    border: 3px solid var(--dark-brown);
+    margin-bottom: 12px;
+    background: white;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.log-entry:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--pink);
+}
+.log-info {
+    flex: 1;
 }
 .log-time {
     font-size: 0.85em;
     color: var(--turquoise);
     font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
 }
 .log-action {
+    color: var(--dark-brown);
     margin-top: 5px;
 }
 .log-user {
     color: var(--pink);
     font-weight: bold;
 }
-.filter-form {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-.filter-form select {
-    padding: 10px;
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--cream);
     border: 3px solid var(--dark-brown);
 }
+.empty-emoji {
+    font-size: 5em;
+    display: block;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.empty-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8em;
+    color: var(--pink);
+    margin-bottom: 10px;
+}
+.empty-text {
+    color: var(--dark-brown);
+    opacity: 0.8;
+    margin-bottom: 20px;
+}
+.info-list {
+    text-align: left;
+    background: white;
+    border: 3px solid var(--dark-brown);
+    padding: 20px 30px;
+}
+.info-list h4 {
+    color: var(--dark-brown);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.info-list ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--dark-brown);
+    line-height: 2;
+}
+@media (max-width: 500px) {
+    .log-entry {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
 </style>
+{% endblock %}
 
-<div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+{% block content %}
+<div class="admin-header">
     <h2>Activity Logs</h2>
     <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/dashboard/">Dashboard</a>
+    <a href="/admin/users/">Users</a>
+    <a href="/admin/games/">Games</a>
+    <a href="/admin/user/create/">Create User</a>
+    <a href="/admin/feedbacks/">Feedbacks</a>
+    <a href="/admin/settings/">Settings</a>
+    <a href="/admin/logs/" class="active">Logs</a>
 </div>
 
 <div class="filter-form">
@@ -57,20 +183,18 @@
 
 <div class="empty-state">
     <span class="empty-emoji">&#128221;</span>
-    <p>No activity logs yet!</p>
-    <p style="font-size: 0.9em; opacity: 0.7; margin-top: 10px;">
-        Activity logging coming soon. Track user logins, game actions, and more.
-    </p>
-</div>
+    <div class="empty-title">No Activity Logs Yet!</div>
+    <div class="empty-text">Activity logging coming soon.</div>
 
-<p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
-    In a production app, create a Log model to track:
-</p>
-<ul style="text-align: center; list-style: none; font-size: 0.9em; color: #666;">
-    <li>- User registrations and logins</li>
-    <li>- Games created and joined</li>
-    <li>- Moves made</li>
-    <li>- Wins and draws</li>
-    <li>- Admin actions</li>
-</ul>
+    <div class="info-list">
+        <h4>In production, track these activities:</h4>
+        <ul>
+            <li>User registrations and logins</li>
+            <li>Games created and joined</li>
+            <li>Moves made during games</li>
+            <li>Wins and draws</li>
+            <li>Admin actions</li>
+        </ul>
+    </div>
+</div>
 {% endblock %}

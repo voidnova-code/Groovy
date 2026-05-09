@@ -3,28 +3,103 @@
 
 {% block title %}Settings - GROOVY Admin{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.admin-header h2 {
+    margin-bottom: 0;
+}
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+.admin-nav a {
+    padding: 12px 20px;
+    background: var(--turquoise);
+    color: white;
+    border: 3px solid var(--dark-brown);
+    text-decoration: none;
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.admin-nav a:hover {
+    transform: translate(-3px, -3px) rotate(2deg);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.admin-nav a.active {
+    background: var(--pink);
+    transform: rotate(-1deg);
+}
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
 .setting-card {
     background: var(--cream);
     border: 3px solid var(--dark-brown);
-    padding: 20px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+.setting-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--pink);
+}
+.setting-card h3 {
     margin-bottom: 20px;
+    color: var(--pink);
+    font-family: 'Fredoka One', cursive;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 3px solid var(--dark-brown);
+    padding-bottom: 12px;
 }
 .setting-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 0;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid rgba(44, 24, 16, 0.1);
+}
+.setting-row:last-child {
+    border-bottom: none;
+}
+.setting-info strong {
+    display: block;
+    color: var(--dark-brown);
+    margin-bottom: 4px;
+}
+.setting-info p {
+    font-size: 0.85em;
+    color: var(--dark-brown);
+    opacity: 0.7;
+    margin: 0;
 }
 .toggle {
-    width: 50px;
-    height: 26px;
+    width: 55px;
+    height: 28px;
     background: #ccc;
-    border-radius: 13px;
+    border-radius: 14px;
     position: relative;
     cursor: pointer;
+    border: 3px solid var(--dark-brown);
+    transition: all 0.3s ease;
+}
+.toggle:hover {
+    transform: scale(1.05);
 }
 .toggle.active {
     background: var(--turquoise);
@@ -36,103 +111,162 @@
     background: white;
     border-radius: 50%;
     position: absolute;
-    top: 2px;
-    left: 2px;
-    transition: left 0.3s;
+    top: 0;
+    left: 0;
+    transition: left 0.3s ease;
 }
 .toggle.active::after {
-    left: 26px;
+    left: 25px;
+}
+.setting-select {
+    padding: 10px 15px;
+    border: 3px solid var(--dark-brown);
+    font-family: 'Righteous', cursive;
+    background: white;
+    cursor: pointer;
+    min-width: 120px;
+}
+.setting-select:focus {
+    outline: none;
+    box-shadow: 3px 3px 0 var(--pink);
+}
+.setting-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3em;
+    color: var(--pink);
+}
+.save-section {
+    text-align: center;
+    margin-top: 30px;
+}
+.save-section button {
+    min-width: 200px;
+}
+@media (max-width: 500px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+    .setting-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .toggle {
+        align-self: flex-end;
+    }
 }
 </style>
+{% endblock %}
 
-<div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+{% block content %}
+<div class="admin-header">
     <h2>System Settings</h2>
     <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
 </div>
 
-<div class="setting-card">
-    <h3>General Settings</h3>
+<div class="admin-nav">
+    <a href="/admin/dashboard/">Dashboard</a>
+    <a href="/admin/users/">Users</a>
+    <a href="/admin/games/">Games</a>
+    <a href="/admin/user/create/">Create User</a>
+    <a href="/admin/feedbacks/">Feedbacks</a>
+    <a href="/admin/settings/" class="active">Settings</a>
+    <a href="/admin/logs/">Logs</a>
+</div>
 
-    <div class="setting-row">
-        <div>
-            <strong>Allow New Registrations</strong>
-            <p style="font-size: 0.85em; color: #666;">Users can create new accounts</p>
+<div class="settings-grid">
+    <div class="setting-card">
+        <h3>General</h3>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Allow Registrations</strong>
+                <p>Users can create new accounts</p>
+            </div>
+            <div class="toggle {% if settings.allow_registration %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
         </div>
-        <div class="toggle {% if settings.allow_registration %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Max Room Idle Time</strong>
+                <p>Hours before empty rooms auto-delete</p>
+            </div>
+            <select class="setting-select">
+                <option {% if settings.max_room_idle_hours == 1 %}selected{% endif %}>1 hour</option>
+                <option {% if settings.max_room_idle_hours == 6 %}selected{% endif %}>6 hours</option>
+                <option {% if settings.max_room_idle_hours == 24 %}selected{% endif %}>24 hours</option>
+                <option {% if settings.max_room_idle_hours == 48 %}selected{% endif %}>48 hours</option>
+                <option {% if settings.max_room_idle_hours == 168 %}selected{% endif %}>7 days</option>
+            </select>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Auto-delete Finished</strong>
+                <p>Remove finished games after 30 days</p>
+            </div>
+            <div class="toggle {% if settings.auto_delete_finished %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
+        </div>
     </div>
 
-    <div class="setting-row">
-        <div>
-            <strong>Max Room Idle Time</strong>
-            <p style="font-size: 0.85em; color: #666;">Hours before empty rooms are deleted</p>
+    <div class="setting-card">
+        <h3>Game</h3>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Players per Room</strong>
+                <p>Maximum players in a game</p>
+            </div>
+            <span class="setting-value">2</span>
         </div>
-        <select style="padding: 8px; border: 2px solid var(--dark-brown);">
-            <option>1 hour</option>
-            <option>6 hours</option>
-            <option selected>24 hours</option>
-            <option>48 hours</option>
-            <option>7 days</option>
-        </select>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Show Leaderboard</strong>
+                <p>Display top players on dashboard</p>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Track Statistics</strong>
+                <p>Save win/draw stats per user</p>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        </div>
     </div>
 
-    <div class="setting-row">
-        <div>
-            <strong>Auto-delete Finished Games</strong>
-            <p style="font-size: 0.85em; color: #666;">Remove finished games after 30 days</p>
+    <div class="setting-card">
+        <h3>Maintenance</h3>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Database Size</strong>
+                <p>Current database usage</p>
+            </div>
+            <span class="setting-value">~2.5 MB</span>
         </div>
-        <div class="toggle {% if settings.auto_delete_finished %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Export All Data</strong>
+                <p>Download complete backup</p>
+            </div>
+            <button class="btn-turquoise">Export</button>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Clear Cache</strong>
+                <p>Reset temporary data</p>
+            </div>
+            <button class="btn-white">Clear</button>
+        </div>
     </div>
 </div>
 
-<div class="setting-card">
-    <h3>Game Settings</h3>
-
-    <div class="setting-row">
-        <div>
-            <strong>Max Players per Room</strong>
-            <p style="font-size: 0.85em; color: #666;">Only 2 players allowed per game</p>
-        </div>
-        <span style="font-size: 1.2em; font-weight: bold;">2</span>
-    </div>
-
-    <div class="setting-row">
-        <div>
-            <strong>Show Leaderboard</strong>
-            <p style="font-size: 0.85em; color: #666;">Display top players on dashboard</p>
-        </div>
-        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
-    </div>
-
-    <div class="setting-row">
-        <div>
-            <strong>Track Statistics</strong>
-            <p style="font-size: 0.85em; color: #666;">Save win/draw statistics per user</p>
-        </div>
-        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
-    </div>
-</div>
-
-<div class="setting-card">
-    <h3>Maintenance</h3>
-
-    <div class="setting-row">
-        <div>
-            <strong>Database Size</strong>
-            <p style="font-size: 0.85em; color: #666;">Current database usage</p>
-        </div>
-        <span style="font-size: 1.2em; font-weight: bold;">~2.5 MB</span>
-    </div>
-
-    <div class="setting-row">
-        <div>
-            <strong>Export All Data</strong>
-            <p style="font-size: 0.85em; color: #666;">Download complete backup</p>
-        </div>
-        <button class="btn-turquoise">Export</button>
-    </div>
-</div>
-
-<div style="text-align: center; margin-top: 20px;">
-    <button class="btn-pink" style="padding: 15px 40px;">Save Settings</button>
+<div class="save-section">
+    <button class="btn-pink">Save Settings</button>
 </div>
 {% endblock %}

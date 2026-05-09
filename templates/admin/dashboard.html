@@ -3,17 +3,22 @@
 
 {% block title %}Admin Dashboard - GROOVY{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.admin-header h2 {
+    margin-bottom: 0;
 }
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
 }
@@ -22,6 +27,11 @@
     border: 3px solid var(--dark-brown);
     padding: 20px;
     text-align: center;
+    transition: all 0.3s ease;
+}
+.stat-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--dark-brown);
 }
 .stat-value {
     font-family: 'Fredoka One', cursive;
@@ -29,12 +39,14 @@
     color: var(--pink);
 }
 .stat-label {
-    font-size: 0.9em;
+    font-size: 0.85em;
     text-transform: uppercase;
+    letter-spacing: 1px;
     color: var(--dark-brown);
 }
 .stat-card.highlight {
     background: var(--yellow);
+    transform: rotate(1deg);
 }
 .stat-card.highlight .stat-value {
     color: var(--dark-brown);
@@ -43,7 +55,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
+    justify-content: center;
 }
 .admin-nav a {
     padding: 12px 20px;
@@ -53,43 +66,169 @@
     text-decoration: none;
     font-family: 'Righteous', cursive;
     text-transform: uppercase;
-    transition: all 0.3s ease;
+    font-size: 0.9em;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .admin-nav a:hover {
-    transform: translate(-3px, -3px);
+    transform: translate(-3px, -3px) rotate(2deg);
     box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.admin-nav a.active {
+    background: var(--pink);
+    transform: rotate(-1deg);
+}
+.admin-section {
+    margin-bottom: 35px;
+}
+.admin-section h3 {
+    border-bottom: 3px solid var(--dark-brown);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 .admin-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
+    background: white;
+    border: 3px solid var(--dark-brown);
 }
 .admin-table th, .admin-table td {
-    padding: 12px;
+    padding: 12px 15px;
     border: 2px solid var(--dark-brown);
     text-align: left;
 }
 .admin-table th {
     background: var(--yellow);
     font-family: 'Fredoka One', cursive;
+    text-transform: uppercase;
+    font-size: 0.9em;
 }
 .admin-table tr:nth-child(even) {
     background: var(--cream);
+}
+.admin-table tr:hover {
+    background: #ffe6e6;
+}
+.admin-table a {
+    color: var(--pink);
+    font-weight: bold;
+    text-decoration: none;
+}
+.admin-table a:hover {
+    text-decoration: underline;
+}
+.btn-small {
+    padding: 8px 12px;
+    font-size: 0.8em;
+    margin-right: 5px;
 }
 .btn-danger {
     background: #e74c3c;
     color: white;
 }
-.status-playing { background: var(--turquoise); color: white; padding: 3px 10px; }
-.status-waiting { background: var(--yellow); color: var(--dark-brown); padding: 3px 10px; }
-.status-finished { background: var(--pink); color: white; padding: 3px 10px; }
+.btn-danger:hover {
+    background: #c0392b;
+    box-shadow: 3px 3px 0 var(--dark-brown);
+}
+.status-playing { background: var(--turquoise); color: white; padding: 4px 10px; border-radius: 4px; }
+.status-waiting { background: var(--yellow); color: var(--dark-brown); padding: 4px 10px; border-radius: 4px; }
+.status-finished { background: var(--pink); color: white; padding: 4px 10px; border-radius: 4px; }
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.search-box input {
+    flex: 1;
+    min-width: 200px;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.pagination a, .pagination span {
+    padding: 8px 14px;
+    border: 2px solid var(--dark-brown);
+    background: white;
+    color: var(--dark-brown);
+    text-decoration: none;
+}
+.pagination a:hover {
+    background: var(--yellow);
+}
+.pagination span {
+    background: var(--pink);
+    color: white;
+}
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--dark-brown);
+    opacity: 0.7;
+}
+.chart-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 15px;
+    height: 150px;
+    padding: 20px;
+    background: var(--cream);
+    border: 3px solid var(--dark-brown);
+}
+.chart-bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60px;
+}
+.chart-bar-fill {
+    width: 40px;
+    background: var(--pink);
+    border: 2px solid var(--dark-brown);
+    transition: all 0.3s ease;
+}
+.chart-bar-fill:hover {
+    background: var(--turquoise);
+}
+.chart-bar-label {
+    margin-top: 8px;
+    font-size: 0.8em;
+    color: var(--dark-brown);
+}
+.chart-bar-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2em;
+    color: var(--pink);
+    margin-bottom: 5px;
+}
+@media (max-width: 600px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .admin-nav {
+        justify-content: center;
+    }
+    .admin-table {
+        font-size: 0.85em;
+    }
+    .admin-table th, .admin-table td {
+        padding: 8px;
+    }
+}
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="admin-header">
     <h2>Admin Dashboard</h2>
-    <div>
-        <a href="/admin/export/users/" class="btn-pink" style="margin-right: 10px;">Export Users</a>
-        <a href="/admin/export/games/" class="btn-pink">Export Games</a>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="/admin/export/users/" class="btn-pink btn-small">Export Users</a>
+        <a href="/admin/export/games/" class="btn-pink btn-small">Export Games</a>
+        <a href="/" class="btn-turquoise btn-small">Back to Game</a>
     </div>
 </div>
 
@@ -108,7 +247,7 @@
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ weekly_games }}</div>
-        <div class="stat-label">Games This Week</div>
+        <div class="stat-label">This Week</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ active_games }}</div>
@@ -125,79 +264,95 @@
 </div>
 
 <div class="admin-nav">
-    <a href="/admin/users/">Manage Users</a>
-    <a href="/admin/games/">Manage Games</a>
+    <a href="/admin/dashboard/" class="{% if request.path == '/admin/dashboard/' %}active{% endif %}">Dashboard</a>
+    <a href="/admin/users/">Users</a>
+    <a href="/admin/games/">Games</a>
     <a href="/admin/user/create/">Create User</a>
     <a href="/admin/feedbacks/">Feedbacks</a>
     <a href="/admin/settings/">Settings</a>
-    <a href="/admin/logs/">Activity Logs</a>
+    <a href="/admin/logs/">Logs</a>
 </div>
 
-<h3>Daily Games (Last 7 Days)</h3>
-<div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 25px;">
-    {% for day in daily_stats %}
-    <div style="text-align: center; padding: 15px; border: 3px solid var(--dark-brown); min-width: 80px;">
-        <div style="font-size: 1.5em; color: var(--pink);">{{ day.games }}</div>
-        <div style="font-size: 0.8em; color: var(--dark-brown);">{{ day.date }}</div>
+<div class="admin-section">
+    <h3>Daily Games (Last 7 Days)</h3>
+    <div class="chart-bar">
+        {% for day in daily_stats %}
+        <div class="chart-bar-item">
+            <div class="chart-bar-value">{{ day.games }}</div>
+            <div class="chart-bar-fill" style="height: {% if day.games > 0 %}{{ day.games|add:20 }}px{% else %}5px{% endif %};"></div>
+            <div class="chart-bar-label">{{ day.date }}</div>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 
-<h3>Recent Games</h3>
-<table class="admin-table">
-    <tr>
-        <th>Code</th>
-        <th>Player X</th>
-        <th>Player O</th>
-        <th>Status</th>
-        <th>Winner</th>
-        <th>Created</th>
-    </tr>
-    {% for game in recent_games %}
-    <tr>
-        <td><a href="/admin/game/{{ game.id }}/" style="color: var(--pink);">{{ game.code }}</a></td>
-        <td>{{ game.player_x.username }}</td>
-        <td>{% if game.player_o %}{{ game.player_o.username }}{% else %}-{% endif %}</td>
-        <td>
-            {% if game.status == 'playing' %}<span class="status-playing">Playing</span>
-            {% elif game.status == 'waiting' %}<span class="status-waiting">Waiting</span>
-            {% else %}<span class="status-finished">Finished</span>{% endif %}
-        </td>
-        <td>{% if game.winner %}{{ game.winner.username }}{% else %}{% if game.is_draw %}Draw{% else %}-{% endif %}{% endif %}</td>
-        <td>{{ game.created_at|date:"M d, H:i" }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="admin-section">
+    <h3>Recent Games</h3>
+    <table class="admin-table">
+        <tr>
+            <th>Code</th>
+            <th>Player X</th>
+            <th>Player O</th>
+            <th>Status</th>
+            <th>Winner</th>
+            <th>Created</th>
+            <th>Action</th>
+        </tr>
+        {% for game in recent_games %}
+        <tr>
+            <td><a href="/admin/game/{{ game.id }}/">{{ game.code }}</a></td>
+            <td>{{ game.player_x.username }}</td>
+            <td>{% if game.player_o %}{{ game.player_o.username }}{% else %}<span style="opacity: 0.5;">Waiting...</span>{% endif %}</td>
+            <td>
+                {% if game.status == 'playing' %}<span class="status-playing">Playing</span>
+                {% elif game.status == 'waiting' %}<span class="status-waiting">Waiting</span>
+                {% else %}<span class="status-finished">Finished</span>{% endif %}
+            </td>
+            <td>{% if game.winner %}{{ game.winner.username }}{% else %}{% if game.is_draw %}Draw{% else %}-{% endif %}{% endif %}</td>
+            <td>{{ game.created_at|date:"M d, H:i" }}</td>
+            <td><a href="/admin/game/{{ game.id }}/" style="font-size: 0.9em;">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="empty-state">No games yet!</td></tr>
+        {% endfor %}
+    </table>
+</div>
 
-<h3>Top Winners</h3>
-<table class="admin-table">
-    <tr>
-        <th>Username</th>
-        <th>Wins</th>
-    </tr>
-    {% for winner in top_winners %}
-    <tr>
-        <td>{{ winner.username }}</td>
-        <td>{{ winner.wins }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="2">No winners yet!</td></tr>
-    {% endfor %}
-</table>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+    <div class="admin-section">
+        <h3>Top Winners</h3>
+        <table class="admin-table">
+            <tr>
+                <th>Username</th>
+                <th>Wins</th>
+            </tr>
+            {% for winner in top_winners %}
+            <tr>
+                <td>{{ winner.username }}</td>
+                <td><span style="color: var(--pink); font-family: 'Fredoka One', cursive; font-size: 1.2em;">{{ winner.win_count }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="empty-state">No winners yet!</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 
-<h3>Most Active Players</h3>
-<table class="admin-table">
-    <tr>
-        <th>Username</th>
-        <th>Games Played</th>
-    </tr>
-    {% for player in most_active %}
-    <tr>
-        <td>{{ player.username }}</td>
-        <td>{{ player.games_played }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="2">No active players!</td></tr>
-    {% endfor %}
-</table>
+    <div class="admin-section">
+        <h3>Most Active Players</h3>
+        <table class="admin-table">
+            <tr>
+                <th>Username</th>
+                <th>Games</th>
+            </tr>
+            {% for player in most_active %}
+            <tr>
+                <td>{{ player.username }}</td>
+                <td><span style="color: var(--turquoise); font-family: 'Fredoka One', cursive; font-size: 1.2em;">{{ player.games_played }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="empty-state">No active players!</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 {% endblock %}

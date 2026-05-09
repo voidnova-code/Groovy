@@ -1,6 +1,9 @@
-from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.contrib.auth import views as auth_views
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth import authenticate, login
 
 from pages import views as page_views
 
@@ -9,9 +12,47 @@ def spa_index(request):
     return render(request, "index.html")
 
 
+def admin_index(request):
+    """Route /admin/ to the custom admin experience."""
+    if request.user.is_authenticated and request.user.is_superuser:
+        return HttpResponseRedirect("/admin/dashboard/")
+    return HttpResponseRedirect("/admin/login/")
+
+
+@csrf_protect
+def admin_login(request):
+    """Custom admin login page with session-based auth"""
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return HttpResponseRedirect("/admin/dashboard/")
+        return render(request, 'admin/login.html', {'error': 'Admin access is restricted to superusers.'})
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None and user.is_superuser:
+            login(request, user)
+            next_url = request.POST.get('next', '/admin/dashboard/')
+            if next_url != '/admin/dashboard/':
+                next_url = '/admin/dashboard/'
+            return HttpResponseRedirect(next_url)
+        else:
+            return render(request, 'admin/login.html', {'error': 'Invalid admin credentials'})
+
+    return render(request, 'admin/login.html')
+
+
 urlpatterns = [
-    # Django admin
-    path("admin/", admin.site.urls),
+    # Handle login redirect
+    path("accounts/login/", admin_login, name="login"),
+    path("accounts/logout/", auth_views.LogoutView.as_view(next_page="/"), name="logout"),
+
+    # Admin login
+    path("admin/login/", admin_login, name="admin_login"),
+
+    # Redirect root /admin/
+    path("admin/", admin_index),
 
     # Custom admin panel
     path("admin/dashboard/", page_views.admin_dashboard, name="admin_dashboard"),

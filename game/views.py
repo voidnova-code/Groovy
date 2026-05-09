@@ -258,3 +258,118 @@ class GameRoomViewSet(viewsets.ModelViewSet):
 
         room.delete()
         return Response({"message": "Room deleted successfully!"})
+
+    @action(detail=False, methods=["post"], url_path="rematch/request")
+    def request_rematch(self, request):
+        """Request a rematch - only the creator can request"""
+        serializer = JoinRoomSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        room_code = serializer.validated_data["room_code"]
+
+        try:
+            room = GameRoom.objects.get(code=room_code)
+        except GameRoom.DoesNotExist:
+            return Response(
+                {"error": "Room not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only the creator (player_x) can request rematch
+        if request.user != room.player_x:
+            return Response(
+                {"error": "Only the room creator can request a rematch!"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if room.status != "finished":
+            return Response(
+                {"error": "Game is not finished yet!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        room.rematch_requested = True
+        room.rematch_requested_by = request.user
+        room.save()
+
+        return Response(GameRoomSerializer(room).data)
+
+    @action(detail=False, methods=["post"], url_path="rematch/accept")
+    def accept_rematch(self, request):
+        """Accept a rematch request"""
+        serializer = JoinRoomSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        room_code = serializer.validated_data["room_code"]
+
+        try:
+            room = GameRoom.objects.get(code=room_code)
+        except GameRoom.DoesNotExist:
+            return Response(
+                {"error": "Room not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only player_o can accept
+        if request.user != room.player_o:
+            return Response(
+                {"error": "Only the opponent can accept the rematch!"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not room.rematch_requested:
+            return Response(
+                {"error": "No rematch request found!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Reset the game for rematch
+        room.status = "playing"
+        room.reset_board()
+        room.current_turn = "X"
+        room.winner = None
+        room.is_draw = False
+        room.rematch_requested = False
+        room.rematch_requested_by = None
+        room.save()
+
+        return Response(GameRoomSerializer(room).data)
+
+    @action(detail=False, methods=["post"], url_path="rematch/decline")
+    def decline_rematch(self, request):
+        """Decline a rematch request"""
+        serializer = JoinRoomSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        room_code = serializer.validated_data["room_code"]
+
+        try:
+            room = GameRoom.objects.get(code=room_code)
+        except GameRoom.DoesNotExist:
+            return Response(
+                {"error": "Room not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only player_o can decline
+        if request.user != room.player_o:
+            return Response(
+                {"error": "Only the opponent can decline the rematch!"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not room.rematch_requested:
+            return Response(
+                {"error": "No rematch request found!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Clear the rematch request
+        room.rematch_requested = False
+        room.rematch_requested_by = None
+        room.save()
+
+        return Response(GameRoomSerializer(room).data)

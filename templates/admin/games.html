@@ -3,61 +3,215 @@
 
 {% block title %}Manage Games - GROOVY Admin{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.admin-header h2 {
+    margin-bottom: 0;
+}
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+.admin-nav a {
+    padding: 12px 20px;
+    background: var(--turquoise);
+    color: white;
+    border: 3px solid var(--dark-brown);
+    text-decoration: none;
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.admin-nav a:hover {
+    transform: translate(-3px, -3px) rotate(2deg);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.admin-nav a.active {
+    background: var(--pink);
+    transform: rotate(-1deg);
+}
+.filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+    justify-content: center;
+}
+.filter-tabs a {
+    padding: 12px 20px;
+    background: white;
+    border: 3px solid var(--dark-brown);
+    text-decoration: none;
+    color: var(--dark-brown);
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    transition: all 0.3s ease;
+}
+.filter-tabs a:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 3px 3px 0 var(--dark-brown);
+}
+.filter-tabs a.active {
+    background: var(--pink);
+    color: white;
+    transform: rotate(2deg);
+}
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+.search-form input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+.search-form button {
+    padding: 14px 24px;
+    background: var(--turquoise);
+    color: white;
+    border: 3px solid var(--dark-brown);
+    font-family: 'Righteous', cursive;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.search-form button:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--dark-brown);
 }
 .admin-table {
     width: 100%;
     border-collapse: collapse;
+    background: white;
+    border: 3px solid var(--dark-brown);
 }
 .admin-table th, .admin-table td {
-    padding: 12px;
+    padding: 12px 14px;
     border: 2px solid var(--dark-brown);
     text-align: left;
 }
 .admin-table th {
     background: var(--yellow);
     font-family: 'Fredoka One', cursive;
+    text-transform: uppercase;
+    font-size: 0.85em;
 }
 .admin-table tr:nth-child(even) {
     background: var(--cream);
 }
-.filter-tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+.admin-table tr:hover {
+    background: #ffe6e6;
 }
-.filter-tabs a {
-    padding: 10px 20px;
-    background: white;
-    border: 3px solid var(--dark-brown);
+.admin-table td a {
+    color: var(--pink);
+    font-weight: bold;
     text-decoration: none;
-    color: var(--dark-brown);
 }
-.filter-tabs a.active {
-    background: var(--pink);
+.admin-table td a:hover {
+    text-decoration: underline;
+}
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+.status-playing { background: var(--turquoise); color: white; }
+.status-waiting { background: var(--yellow); color: var(--dark-brown); }
+.status-finished { background: var(--pink); color: white; }
+.btn-action {
+    padding: 8px 14px;
+    font-size: 0.85em;
+    margin-right: 8px;
+    border: 2px solid var(--dark-brown);
+    cursor: pointer;
+    font-family: 'Righteous', cursive;
+    transition: all 0.3s ease;
+    background: #e74c3c;
     color: white;
 }
-.status-playing { background: var(--turquoise); color: white; padding: 3px 10px; }
-.status-waiting { background: var(--yellow); color: var(--dark-brown); padding: 3px 10px; }
-.status-finished { background: var(--pink); color: white; padding: 3px 10px; }
+.btn-action:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 3px 3px 0 var(--dark-brown);
+    background: #c0392b;
+}
+.game-count {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--dark-brown);
+}
+.game-count span {
+    color: var(--pink);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3em;
+}
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--dark-brown);
+    opacity: 0.7;
+}
+@media (max-width: 800px) {
+    .admin-table {
+        font-size: 0.8em;
+    }
+    .admin-table th, .admin-table td {
+        padding: 8px;
+    }
+}
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="admin-header">
     <h2>Manage Games</h2>
-    <a href="/admin/" class="btn-white">Back to Dashboard</a>
+    <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/dashboard/">Dashboard</a>
+    <a href="/admin/users/">Users</a>
+    <a href="/admin/games/" class="active">Games</a>
+    <a href="/admin/user/create/">Create User</a>
+    <a href="/admin/feedbacks/">Feedbacks</a>
+    <a href="/admin/settings/">Settings</a>
+    <a href="/admin/logs/">Logs</a>
 </div>
 
 <div class="filter-tabs">
-    <a href="/admin/games/" class="{% if not status_filter %}active{% endif %}">All</a>
+    <a href="/admin/games/" class="{% if not status_filter %}active{% endif %}">All Games</a>
     <a href="/admin/games/?status=waiting" class="{% if status_filter == 'waiting' %}active{% endif %}">Waiting</a>
     <a href="/admin/games/?status=playing" class="{% if status_filter == 'playing' %}active{% endif %}">Playing</a>
     <a href="/admin/games/?status=finished" class="{% if status_filter == 'finished' %}active{% endif %}">Finished</a>
+</div>
+
+<form class="search-form" method="get">
+    {% if status_filter %}
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    {% endif %}
+    <input type="text" name="search" placeholder="Search by code or player..." value="{{ search }}">
+    <button type="submit">Search</button>
+    {% if search %}
+    <a href="/admin/games/{% if status_filter %}?status={{ status_filter }}{% endif %}" class="btn-white" style="padding: 14px 24px; text-decoration: none;">Clear</a>
+    {% endif %}
+</form>
+
+<div class="game-count">
+    Showing <span>{{ games|length }}</span> games
 </div>
 
 <table class="admin-table">
@@ -70,26 +224,26 @@
         <th>Winner</th>
         <th>Draw</th>
         <th>Created</th>
-        <th>Actions</th>
+        <th>Action</th>
     </tr>
     {% for game in games %}
     <tr>
         <td>{{ game.id }}</td>
-        <td style="font-family: 'Fredoka One';">{{ game.code }}</td>
+        <td><a href="/admin/game/{{ game.id }}/">{{ game.code }}</a></td>
         <td>{{ game.player_x.username }}</td>
-        <td>{% if game.player_o %}{{ game.player_o.username }}{% else %}-{% endif %}</td>
+        <td>{% if game.player_o %}{{ game.player_o.username }}{% else %}<span style="opacity: 0.5;">Waiting...</span>{% endif %}</td>
         <td>
-            {% if game.status == 'playing' %}<span class="status-playing">Playing</span>
-            {% elif game.status == 'waiting' %}<span class="status-waiting">Waiting</span>
-            {% else %}<span class="status-finished">Finished</span>{% endif %}
+            {% if game.status == 'playing' %}<span class="status-badge status-playing">Playing</span>
+            {% elif game.status == 'waiting' %}<span class="status-badge status-waiting">Waiting</span>
+            {% else %}<span class="status-badge status-finished">Finished</span>{% endif %}
         </td>
-        <td>{% if game.winner %}{{ game.winner.username }}{% else %}-{% endif %}</td>
-        <td>{% if game.is_draw %}Yes{% else %}No{% endif %}</td>
+        <td>{% if game.winner %}{{ game.winner.username }}{% else %}{% if game.is_draw %}<span style="color: var(--yellow);">Draw</span>{% else %}<span style="opacity: 0.5;">-</span>{% endif %}{% endif %}</td>
+        <td>{% if game.is_draw %}<span style="color: var(--pink);">Yes</span>{% else %}<span style="opacity: 0.5;">No{% endif %}</td>
         <td>{{ game.created_at|date:"M d, H:i" }}</td>
-        <td>
-            <button class="action-btn" onclick="deleteGame({{ game.id }})">Delete</button>
-        </td>
+        <td><a href="/admin/game/{{ game.id }}/" style="font-size: 0.9em;">View</a></td>
     </tr>
+    {% empty %}
+    <tr><td colspan="9" class="empty-state">No games found!</td></tr>
     {% endfor %}
 </table>
 
