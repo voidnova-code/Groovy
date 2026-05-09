@@ -117,6 +117,10 @@ async function loadGameState() {
         const response = await fetch(API_URL + 'rooms/get_room/?code=' + currentRoomCode, {
             headers: { 'Authorization': 'Bearer ' + accessToken }
         });
+        if (response.status === 401) {
+            window.location.href = '/?section=login';
+            return;
+        }
         if (response.ok) {
             const data = await response.json();
             updateGameUI(data);

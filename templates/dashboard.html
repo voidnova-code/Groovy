@@ -151,6 +151,10 @@ async function loadGames() {
         const response = await fetch(API_URL + 'rooms/my_games/', {
             headers: { 'Authorization': 'Bearer ' + accessToken }
         });
+        if (response.status === 401) {
+            window.location.href = '/?section=login';
+            return;
+        }
         const games = await response.json();
         const div = document.getElementById('my-games');
         if (games.length === 0) {
