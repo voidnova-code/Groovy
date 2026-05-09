@@ -3,6 +3,8 @@
 
 {% block title %}Manage Users - GROOVY Admin{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block extra_css %}
 <style>
 .admin-header {
@@ -183,6 +185,7 @@
     Showing <span>{{ users|length }}</span> users
 </div>
 
+<div class="table-responsive">
 <table class="admin-table">
     <tr>
         <th>ID</th>
@@ -214,6 +217,7 @@
     <tr><td colspan="7" class="empty-state">No users found!</td></tr>
     {% endfor %}
 </table>
+</div>
 
 <script>
 function deleteUser(userId) {

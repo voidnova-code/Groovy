@@ -1,6 +1,6 @@
 """
 Django settings for tictactoe project - Production Ready
-Optimized for Render deployment with PostgreSQL
+Optimized for Vercel & Render deployment with PostgreSQL
 """
 
 import os
@@ -20,12 +20,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(50).hex())
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Get allowed hosts from environment
-# Add your Render domain here: ALLOWED_HOSTS=localhost,127.0.0.1,groovy-jhay.onrender.com
+# Add your Vercel or Render domain here
 hosts_from_env = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
 host_list = [h.strip() for h in hosts_from_env.split(",") if h.strip()]
 
-# Allow all onrender.com subdomains for flexibility
-ALLOWED_HOSTS = host_list + [".onrender.com"]
+# Allow Vercel, Render, and other subdomain deployments
+ALLOWED_HOSTS = host_list + [
+    ".vercel.app",
+    ".onrender.com",
+    "localhost",
+    "127.0.0.1"
+]
 
 
 # Application definition
@@ -127,8 +132,17 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
+# For Vercel serverless: use /tmp for ephemeral storage
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+if os.getenv("VERCEL"):
+    STATIC_ROOT = "/tmp/staticfiles"
+else:
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Disable serving static files from Django in production
+# Let Vercel/Render handle static files
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
 
 # Login URLs - use custom admin login
 LOGIN_URL = "/admin/login/"
@@ -137,9 +151,10 @@ LOGOUT_REDIRECT_URL = "/"
 
 # Media files
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-# Static files - use Django's defaults
+if os.getenv("VERCEL"):
+    MEDIA_ROOT = "/tmp/media"
+else:
+    MEDIA_ROOT = BASE_DIR / "media"
 
 
 # REST Framework settings
@@ -168,6 +183,11 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 
 # Security settings for production

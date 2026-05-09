@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.contrib.auth import views as auth_views
 from django.views.decorators.csrf import csrf_protect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout as auth_logout
 
 from pages import views as page_views
 
@@ -22,16 +22,13 @@ def admin_index(request):
 @csrf_protect
 def admin_login(request):
     """Custom admin login page with session-based auth"""
-    if request.user.is_authenticated:
-        if request.user.is_superuser:
-            return HttpResponseRedirect("/admin/dashboard/")
-        return render(request, 'admin/login.html', {'error': 'Admin access is restricted to superusers.'})
-
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None and user.is_superuser:
+            if request.user.is_authenticated:
+                auth_logout(request)
             login(request, user)
             next_url = request.POST.get('next', '/admin/dashboard/')
             if next_url != '/admin/dashboard/':
@@ -39,6 +36,11 @@ def admin_login(request):
             return HttpResponseRedirect(next_url)
         else:
             return render(request, 'admin/login.html', {'error': 'Invalid admin credentials'})
+
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return HttpResponseRedirect("/admin/dashboard/")
+        return render(request, 'admin/login.html', {'error': 'You are logged in as a non-admin user. Sign in with a superuser account.'})
 
     return render(request, 'admin/login.html')
 
@@ -65,6 +67,7 @@ urlpatterns = [
     path("admin/game/delete/<int:game_id>/", page_views.delete_game, name="admin_delete_game"),
     path("admin/feedbacks/", page_views.admin_feedbacks, name="admin_feedbacks"),
     path("admin/settings/", page_views.admin_settings, name="admin_settings"),
+    path("admin/clear-data/", page_views.admin_clear_data, name="admin_clear_data"),
     path("admin/logs/", page_views.admin_logs, name="admin_logs"),
 
     # Export

@@ -11,7 +11,8 @@ build {
 buildCommand = """
 pip install -r requirements.txt
 python manage.py migrate --noinput
-python manage.py create_superuser --username=admin --password=admin123
+python manage.py collectstatic --noinput
+# NOTE: creating a default superuser during build is insecure; create one manually
 """
 
 # Start command - what runs when the container starts

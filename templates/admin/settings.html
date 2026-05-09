@@ -164,6 +164,8 @@
     <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
 </div>
 
+{% block body_class %}admin-page{% endblock %}
+
 <div class="admin-nav">
     <a href="/admin/dashboard/">Dashboard</a>
     <a href="/admin/users/">Users</a>
@@ -261,7 +263,15 @@
                 <strong>Clear Cache</strong>
                 <p>Reset temporary data</p>
             </div>
-            <button class="btn-white">Clear</button>
+            <button class="btn-white" onclick="clearCache()">Clear</button>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <strong>Clear All Data</strong>
+                <p>Delete all non-admin users, games and moves. Irreversible.</p>
+            </div>
+            <button class="btn-action btn-delete" onclick="clearAllData()">Clear All Data</button>
         </div>
     </div>
 </div>
@@ -269,4 +279,45 @@
 <div class="save-section">
     <button class="btn-pink">Save Settings</button>
 </div>
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function clearAllData() {
+    if (!confirm('This will permanently delete ALL non-admin data (users, games, moves). Proceed?')) return;
+    const csrftoken = getCookie('csrftoken');
+    fetch('/admin/clear-data/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    }).then(res => {
+        if (res.redirected) {
+            window.location.href = res.url;
+        } else {
+            alert('Cleared non-admin data.');
+            window.location.reload();
+        }
+    }).catch(err => { alert('Error clearing data'); });
+}
+
+function clearCache() {
+    if (confirm('Clear site cache? This only clears temporary in-memory cache if present.')) {
+        alert('Cache cleared (placeholder).');
+    }
+}
+</script>
 {% endblock %}

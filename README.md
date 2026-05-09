@@ -61,40 +61,40 @@ Visit http://127.0.0.1:8000
 - Access at http://127.0.0.1:8000/admin/dashboard/
 - Login with your superuser credentials
 
-## Deployment (Render)
+## Deployment (Render + Supabase)
 
-### 1. Setup PostgreSQL on Render
-- Create a PostgreSQL database on Render
-- Copy the Internal Database URL
+This project is configured to deploy on Render with a Supabase (PostgreSQL) database.
 
-### 2. Deploy
+1. Create a new Web Service on Render and connect your GitHub repository.
 
-```bash
-# Push to GitHub (make sure to include these files)
-git add .
-git commit -m "Ready for deployment"
-git push origin main
-```
-
-### 3. Configure Render
-
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Add Environment Variables:
+2. Add the following Environment Variables in the Render dashboard:
    - `SECRET_KEY` = (generate a secure random key)
    - `DEBUG` = False
    - `ALLOWED_HOSTS` = your-app.onrender.com
-   - `DATABASE_URL` = (paste PostgreSQL URL)
+   - `DATABASE_URL` = (Supabase Postgres connection URL)
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` if you want Google OAuth
 
-4. Build Command:
-   ```
-   pip install -r requirements.txt && python manage.py migrate --noinput
-   ```
+3. Build Command (Render):
 
-5. Start Command:
-   ```
-   gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=2 --bind=0.0.0.0:$PORT
-   ```
+```
+pip install -r requirements.txt
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
+```
+
+4. Start Command (Render / Procfile):
+
+```
+gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=2 --bind=0.0.0.0:$PORT
+```
+
+Notes:
+- The `DATABASE_URL` from Supabase usually looks like `postgres://user:pass@db.host:5432/dbname`.
+- For Supabase, ensure your connection allows connections from Render IP ranges or use the Supabase connection string and credentials in the Render env var.
+- Do not create a default superuser in your build pipeline — create one manually via the Render shell or use an admin-only management command.
+- If you previously experimented with Vercel files, they can be left in the repo; Render will ignore them.
+
+If you'd like, I can add step-by-step Render and Supabase setup instructions and a small management command to safely create an admin user.
 
 ## Project Structure
 

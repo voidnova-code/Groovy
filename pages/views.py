@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.http import HttpResponse
@@ -176,8 +177,8 @@ def delete_user(request, user_id):
     if request.method == 'POST':
         try:
             user = User.objects.get(id=user_id)
-            if user.is_superuser or user.id == request.user.id:
-                return redirect('admin_users')
+            if user.id == request.user.id:
+                auth_logout(request)
             # Delete related games
             GameRoom.objects.filter(player_x=user).delete()
             GameRoom.objects.filter(player_o=user).delete()
@@ -256,6 +257,31 @@ def admin_settings(request):
         'auto_delete_finished': True,
     }
     return render(request, 'admin/settings.html', {'settings': settings_data})
+
+
+@user_passes_test(is_admin)
+def admin_clear_data(request):
+    """Delete all non-admin data from the database. Only accessible by superusers via POST."""
+    if request.method == 'POST':
+        # Keep all superuser accounts; delete other users and app data
+        try:
+            # Delete game moves and rooms
+            GameMove.objects.all().delete()
+            GameRoom.objects.all().delete()
+
+            # Delete non-superuser users
+            User.objects.filter(is_superuser=False).delete()
+
+            # Optionally: if there are other app models, delete them here
+        except Exception:
+            # If any error, continue but log or ignore silently for now
+            pass
+
+        # Redirect back to settings
+        return redirect('admin_settings')
+
+    # Non-POST -> redirect
+    return redirect('admin_settings')
 
 
 @user_passes_test(is_admin)

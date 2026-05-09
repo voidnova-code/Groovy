@@ -13,6 +13,7 @@ from .serializers import (
     MakeMoveSerializer,
     JoinRoomSerializer,
 )
+from .auth_google import GoogleAuthHandler
 
 
 @api_view(["POST"])
@@ -78,6 +79,8 @@ def logout(request):
 
 @api_view(["GET"])
 def get_current_user(request):
+    if not request.user.is_authenticated:
+        return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 
@@ -87,6 +90,113 @@ def get_razorpay_key(request):
     """Get Razorpay key for frontend"""
     key = os.getenv("RAZORPAY_KEY_ID", "")
     return Response({"key": key})
+
+
+@api_view(["POST"])
+def google_auth_callback(request):
+    """
+    Handle Google OAuth callback
+    Expects: auth_code, redirect_uri, and optional email_to_link for existing users
+    """
+    auth_code = request.data.get("auth_code")
+    redirect_uri = request.data.get("redirect_uri")
+    email_to_link = request.data.get("email_to_link")  # For linking to existing account
+    
+    if not auth_code or not redirect_uri:
+        return Response(
+            {"error": "Missing auth_code or redirect_uri"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    handler = GoogleAuthHandler()
+    user_data, tokens, error = handler.authenticate_with_google(
+        auth_code, 
+        redirect_uri, 
+        email_to_link
+    )
+    
+    if error:
+        return Response(
+            {"error": error},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    return Response({
+        "user": user_data,
+        "tokens": tokens
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def link_google_account(request):
+    """
+    Link Google account to existing authenticated user
+    Expects: auth_code, redirect_uri
+    """
+    if not request.user.is_authenticated:
+        return Response(
+            {"error": "Not authenticated"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    auth_code = request.data.get("auth_code")
+    redirect_uri = request.data.get("redirect_uri")
+    
+    if not auth_code or not redirect_uri:
+        return Response(
+            {"error": "Missing auth_code or redirect_uri"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    handler = GoogleAuthHandler()
+    token_data, error = handler.exchange_token(auth_code, redirect_uri)
+    
+    if error:
+        return Response(
+            {"error": error},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    access_token = token_data.get('access_token')
+    google_info, error = handler.get_user_info(access_token)
+    
+    if error:
+        return Response(
+            {"error": error},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    success, message = handler.link_google_to_user(request.user, google_info)
+    
+    if not success:
+        return Response(
+            {"error": message},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    return Response({
+        "message": message,
+        "user": UserSerializer(request.user).data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_google_auth_config(request):
+    """
+    Get Google OAuth configuration for frontend
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    if not client_id:
+        return Response(
+            {"error": "Google OAuth not configured"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+    
+    return Response({
+        "client_id": client_id,
+        "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
+        "scopes": ["openid", "email", "profile"]
+    }, status=status.HTTP_200_OK)
 
 
 class GameRoomViewSet(viewsets.ModelViewSet):
@@ -157,9 +267,15 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if room.status != "waiting":
+        if room.status not in ["waiting", "playing"]:
             return Response(
                 {"error": "Room is not available for joining"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if room.status == "playing":
+            return Response(
+                {"error": "Game already in progress"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -206,10 +322,17 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # Verify user is part of this game and both players are present
         if request.user != room.player_x and request.user != room.player_o:
             return Response(
                 {"error": "You are not a player in this game"},
                 status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if not room.player_o:
+            return Response(
+                {"error": "Game not ready - waiting for opponent"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         success, message = room.make_move(position, request.user)

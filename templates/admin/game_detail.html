@@ -3,6 +3,8 @@
 
 {% block title %}Game {{ game.code }} - GROOVY Admin{% endblock %}
 
+{% block body_class %}admin-page{% endblock %}
+
 {% block extra_css %}
 <style>
 .admin-header {
@@ -278,6 +280,7 @@
 
 <div class="board-section">
     <h3>Move History</h3>
+    <div class="table-responsive">
     <table class="admin-table">
         <tr>
             <th>#</th>
@@ -298,6 +301,7 @@
         <tr><td colspan="5" class="empty-state">No moves yet!</td></tr>
         {% endfor %}
     </table>
+    </div>
 </div>
 
 <div class="action-row">

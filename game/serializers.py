@@ -1,15 +1,29 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import EmailValidator
 from .models import GameRoom, GameMove
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    password = serializers.CharField(write_only=True, min_length=8)
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(validators=[UnicodeUsernameValidator()])
 
     class Meta:
         model = User
         fields = ["id", "username", "email", "password"]
         read_only_fields = ["id"]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered.")
+        return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(

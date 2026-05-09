@@ -15,7 +15,25 @@
       "Bash(git commit *)",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\sayan\\\\Desktop\\\\New folder \\(3\\)\\\\game\\\\views.py\")",
+      "Bash(Select-Object -First 100)",
+      "Bash(python manage.py makemigrations game --name rematch_feature)",
+      "Bash(python manage.py runserver 8080)",
+      "Bash(curl -s http://127.0.0.1:8080/)",
+      "Bash(curl *)",
+      "Bash(python -c \"import django; print\\(django.VERSION\\)\")",
+      "Bash(python manage.py runserver)",
+      "Bash(python -c \"from tictactoe.urls import urlpatterns; print\\([p.pattern for p in urlpatterns]\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=tictactoe.settings python -c \"import django; django.setup\\(\\); from tictactoe.urls import urlpatterns; print\\([str\\(p.pattern\\) for p in urlpatterns]\\)\")",
+      "Bash(python manage.py runserver 8000 --noreload)",
+      "Bash(python -c ' *)",
+      "Bash(python manage.py runserver 8888)",
+      "Bash(python manage.py runserver 9000)",
+      "Bash(python manage.py runserver 8000)",
+      "Bash(DJANGO_SETTINGS_MODULE=tictactoe.settings python -c ' *)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(powershell *)"
     ]
   }
 }
