@@ -109,6 +109,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Password hashers - fallback to default for old passwords
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+]
+
+
 # Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
