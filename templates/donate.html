@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Donate - GROOVY{% endblock %}
+
+{% block content %}
+<div style="text-align: center;">
+    <div style="font-size: 2em; color: var(--pink); margin-bottom: 15px; text-shadow: 3px 3px 0 var(--yellow);">Support the Game!</div>
+    <p style="color: var(--dark-brown); margin-bottom: 25px; line-height: 1.6;">Fuel the void! Your support helps me create more epic games. Even a coffee counts!</p>
+    <span style="font-size: 3em; animation: heartbeat 1s ease-in-out infinite; display: block; margin: 20px 0;">&#10084;</span>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px;">
+        <div class="donate-option" onclick="selectDonate(10)" style="padding: 15px 25px; border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer; transition: all 0.3s ease; background: white; color: var(--dark-brown);">&#8377;10</div>
+        <div class="donate-option" onclick="selectDonate(25)" style="padding: 15px 25px; border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer; transition: all 0.3s ease; background: white; color: var(--dark-brown);">&#8377;25</div>
+        <div class="donate-option" onclick="selectDonate(50)" style="padding: 15px 25px; border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer; transition: all 0.3s ease; background: white; color: var(--dark-brown);">&#8377;50</div>
+        <div class="donate-option" onclick="selectDonate(100)" style="padding: 15px 25px; border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer; transition: all 0.3s ease; background: white; color: var(--dark-brown);">&#8377;100</div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 6px;">Or enter custom amount</label>
+        <input type="number" id="custom-amount" placeholder="Enter amount" min="1" style="text-align: center; font-size: 1.3em; font-family: 'Fredoka One', cursive;">
+    </div>
+
+    <button class="btn-turquoise" onclick="processDonation()" style="width: 100%; font-size: 1.2em; padding: 18px 30px;">Donate Now</button>
+
+    <div class="nav-links" style="margin-top: 20px;">
+        <a href="{% url 'dashboard' %}">Back to Game</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+.donate-option:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.donate-option.selected {
+    background: var(--pink) !important;
+    color: white !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedDonate = 0;
+
+function selectDonate(amount) {
+    selectedDonate = amount;
+    document.querySelectorAll('.donate-option').forEach(opt => opt.classList.remove('selected'));
+    event.target.classList.add('selected');
+    document.getElementById('custom-amount').value = '';
+}
+
+async function processDonation() {
+    const customAmount = document.getElementById('custom-amount').value;
+    const amount = customAmount ? parseInt(customAmount) : selectedDonate;
+    if (!amount || amount < 1) {
+        alert('Hey! Pick a number, any number!');
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL + 'auth/razorpay-key/');
+        const data = await res.json();
+        if (!data.key) {
+            alert('Donation not set up yet, but you rock for trying!');
+            return;
+        }
+
+        const options = {
+            key: data.key,
+            amount: amount * 100,
+            currency: 'INR',
+            name: 'GROOVY Tic Tac Toe',
+            description: 'Support the Game!',
+            handler: function(response) {
+                alert('Woohoo! You\'re a legend! ');
+            },
+            prefill: {
+                name: currentUser ? currentUser.username : 'Guest',
+                email: currentUser ? currentUser.email : ''
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } catch(e) {
+        alert('Coming soon! But you\'re awesome for wanting to support!');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Feedbacks - GROOVY Admin{% endblock %}
+
+{% block content %}
+<style>
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.empty-state {
+    text-align: center;
+    padding: 50px;
+    background: var(--cream);
+    border: 3px solid var(--dark-brown);
+}
+.empty-emoji {
+    font-size: 4em;
+    display: block;
+    margin-bottom: 15px;
+}
+</style>
+
+<div class="admin-header">
+    <h2>User Feedbacks</h2>
+    <a href="/admin/" class="btn-white">Back to Dashboard</a>
+</div>
+
+<div class="empty-state">
+    <span class="empty-emoji">&#128172;</span>
+    <p>No feedbacks collected yet!</p>
+    <p style="font-size: 0.9em; opacity: 0.7; margin-top: 10px;">
+        Feedbacks are stored in localStorage of users' browsers.<br>
+        In a production app, you'd save them to the database.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+build {
+  # Don't build Python artifacts into an archive
+  # No build artifacts to upload
+}
+
+# This file tells Render how to start your web server
+# Build command: yarn build (if using yarn) or npm run build (if using npm)
+# If your app has a package.json with a build script, run that
+
+# Build command - install dependencies and run migrations
+# Build is run at /workspace, but you can change directory and run commands
+buildCommand = """
+pip install -r requirements.txt
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
+"""
+
+# Start command - what runs when the container starts
+startCommand = "gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=2 --bind=0.0.0.0:$PORT"
+
+# Environment variables to set
+# These can be set in the Render dashboard
+
+# Health check - optional but recommended
+# Health check path - Render will ping this to confirm the service is healthy
+# Remove or comment out healthCheck if your service doesn't have a health endpoint
+# healthCheck = {
+#      path: "/",
+#      failedThreshold: 3,
+#      intervalSeconds: 60,
+# }

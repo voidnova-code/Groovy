@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - GROOVY{% endblock %}
+
+{% block content %}
+<div class="welcome-text" style="text-align: center; margin-bottom: 25px; color: var(--dark-brown);">
+    Welcome, <span id="user-display" style="color: var(--pink);"></span>!
+</div>
+
+<div class="btn-row">
+    <button class="btn-pink" onclick="createRoom()">Create Game</button>
+    <button class="btn-turquoise" onclick="showJoinForm()">Join Game</button>
+</div>
+
+<div id="join-form" class="join-form" style="display: none; margin-bottom: 20px; padding: 20px; background: var(--cream); border: 3px solid var(--dark-brown);">
+    <div class="form-group">
+        <label>Room Code</label>
+        <input type="text" id="join-room-code" placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase;">
+    </div>
+    <div class="btn-row" style="margin-bottom: 0;">
+        <button class="btn-pink" onclick="joinRoom()">Join</button>
+        <button class="btn-white" onclick="hideJoinForm()">Cancel</button>
+    </div>
+</div>
+
+<h2>My Games</h2>
+<div id="my-games" class="game-list"></div>
+
+<div class="nav-links">
+    <a href="{% url 'donate' %}">Donate</a> |
+    <a href="{% url 'about' %}">About</a>
+</div>
+
+<button class="btn-white" onclick="logout()" style="width: 100%;">Logout</button>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.game-list { margin-bottom: 20px; }
+.game-item {
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 3px solid var(--dark-brown);
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+.game-item:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.game-item-code {
+    font-family: 'Fredoka One', cursive;
+    color: var(--pink);
+    font-size: 1.2em;
+}
+.game-item-status {
+    color: var(--dark-brown);
+    font-size: 0.85em;
+    margin-top: 4px;
+}
+.game-item-left { flex: 1; }
+.no-games {
+    color: var(--dark-brown);
+    opacity: 0.7;
+    text-align: center;
+    padding: 20px;
+}
+.btn-delete {
+    background: none;
+    border: none;
+    font-size: 1.3em;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: transform 0.2s ease;
+}
+.btn-delete:hover { transform: scale(1.2); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRoomCode = null;
+let pollInterval = null;
+
+// Initialize
+async function init() {
+    const authenticated = await checkAuth();
+    if (authenticated) {
+        document.getElementById('user-display').textContent = currentUser.username;
+        await loadGames();
+        startPolling();
+    }
+}
+
+function showJoinForm() {
+    document.getElementById('join-form').style.display = 'block';
+}
+
+function hideJoinForm() {
+    document.getElementById('join-form').style.display = 'none';
+    document.getElementById('join-room-code').value = '';
+}
+
+async function createRoom() {
+    try {
+        const response = await fetch(API_URL + 'rooms/', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        const data = await response.json();
+        currentRoomCode = data.code;
+        if (data.status === 'waiting') {
+            window.location.href = '{% url "waiting" %}?code=' + data.code;
+        } else {
+            window.location.href = '{% url "game" %}?code=' + data.code;
+        }
+    } catch (err) {
+        alert('Oops! The room exploded. Try again!');
+    }
+}
+
+async function joinRoom() {
+    const code = document.getElementById('join-room-code').value.toUpperCase();
+    if (!code) return;
+    try {
+        const response = await fetch(API_URL + 'rooms/join/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ room_code: code })
+        });
+        if (response.ok) {
+            window.location.href = '{% url "game" %}?code=' + code;
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Nope! That room is a ghost town.');
+        }
+    } catch (err) {
+        alert('The room is in another castle! Try a different code.');
+    }
+}
+
+async function loadGames() {
+    try {
+        const response = await fetch(API_URL + 'rooms/my_games/', {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        const games = await response.json();
+        const div = document.getElementById('my-games');
+        if (games.length === 0) {
+            div.innerHTML = '<div class="no-games">No games yet? Let\'s change that!</div>';
+        } else {
+            div.innerHTML = games.map(game => {
+                let statusText = '';
+                if (game.status === 'waiting') statusText = 'Waiting for opponent';
+                else if (game.status === 'playing') statusText = 'In Progress';
+                else if (game.is_draw) statusText = 'Draw';
+                else statusText = `Won by ${game.winner_username}`;
+                const isHost = game.player_x === currentUser.id;
+                const deleteBtn = isHost ? `<button class="btn-delete" onclick="event.stopPropagation(); deleteGame('${game.code}')" title="Delete room">&#128465;</button>` : '';
+                return `<div class="game-item" onclick="window.location.href='{% url "game" %}?code=${game.code}'">
+                    <div class="game-item-left">
+                        <div class="game-item-code">${game.code}</div>
+                        <div class="game-item-status">${statusText}</div>
+                    </div>
+                    ${deleteBtn}
+                </div>`;
+            }).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load games');
+    }
+}
+
+async function deleteGame(code) {
+    if (!confirm('Are you sure you want to delete this room? It\'s gone forever!')) return;
+    try {
+        const response = await fetch(API_URL + 'rooms/delete/?code=' + code, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        if (response.ok) {
+            alert('Room deleted! Poof!');
+            await loadGames();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Couldn\'t delete the room!');
+        }
+    } catch (err) {
+        alert('The void didn\'t accept it. Try again!');
+    }
+}
+
+function startPolling() {
+    stopPolling();
+    pollInterval = setInterval(loadGames, 3000);
+}
+
+function stopPolling() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+init();
+</script>
+{% endblock %}

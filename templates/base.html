@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GROOVY - Tic Tac Toe{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Righteous&display=swap" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/razorpay.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pink: #FF6B6B;
+            --turquoise: #4ECDC4;
+            --yellow: #FFE66D;
+            --cream: #FFF5E6;
+            --dark-brown: #2C1810;
+        }
+        body {
+            font-family: 'Righteous', cursive;
+            min-height: 100vh;
+            background: linear-gradient(45deg, var(--cream), #FFD6E0, #D6F0FF, #D6FFE8, var(--cream));
+            background-size: 400% 400%;
+            animation: rainbowBg 10s ease infinite;
+            overflow-x: hidden;
+            position: relative;
+            padding: 20px;
+        }
+        @keyframes rainbowBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* Extended blobs for full screen */
+        .blob {
+            position: fixed;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .blob-1 {
+            width: 350px; height: 350px; background: var(--pink);
+            top: -50px; left: -100px;
+            animation: float1 12s ease-in-out infinite;
+        }
+        .blob-2 {
+            width: 280px; height: 280px; background: var(--turquoise);
+            top: 50%; right: -80px;
+            animation: float2 15s ease-in-out infinite;
+        }
+        .blob-3 {
+            width: 320px; height: 320px; background: var(--yellow);
+            bottom: -80px; left: 20%;
+            animation: float3 18s ease-in-out infinite;
+        }
+        .blob-4 {
+            width: 200px; height: 200px; background: var(--pink);
+            bottom: 20%; left: -50px;
+            animation: float4 10s ease-in-out infinite;
+        }
+        .blob-5 {
+            width: 180px; height: 180px; background: var(--turquoise);
+            top: 20%; right: -30px;
+            animation: float5 14s ease-in-out infinite;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 30% 70% 70% 30%; }
+            33% { transform: translate(50px, 30px) rotate(15deg); border-radius: 70% 30% 30% 70%; }
+            66% { transform: translate(-30px, 50px) rotate(-10deg); border-radius: 30% 70% 70% 30%; }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 70% 30% 30% 70%; }
+            33% { transform: translate(-50px, -30px) rotate(-20deg); border-radius: 30% 70% 70% 30%; }
+            66% { transform: translate(40px, 40px) rotate(10deg); border-radius: 70% 30% 30% 70%; }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 30% 70% 70% 30%; }
+            33% { transform: translate(40px, 60px) rotate(8deg); border-radius: 70% 30% 70% 30%; }
+            66% { transform: translate(-50px, 20px) rotate(-15deg); border-radius: 30% 70% 30% 70%; }
+        }
+        @keyframes float4 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 60% 40% 60% 40%; }
+            50% { transform: translate(20px, -20px) rotate(10deg); }
+        }
+        @keyframes float5 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 40% 60% 40% 60%; }
+            50% { transform: translate(-15px, 15px) rotate(-8deg); }
+        }
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            background: white;
+            border: 5px solid var(--dark-brown);
+            padding: 50px 45px;
+            max-width: 550px;
+            width: 100%;
+            transform: rotate(-1deg);
+            box-shadow: 10px 10px 0 var(--pink), 16px 16px 0 var(--turquoise), 22px 22px 0 var(--yellow);
+            position: relative;
+            margin: 20px 0;
+        }
+        .corner {
+            position: absolute;
+            width: 24px; height: 24px;
+            background: var(--yellow);
+            border-radius: 50%;
+            border: 3px solid var(--dark-brown);
+            z-index: 2;
+        }
+        .corner-tl { top: -12px; left: -12px; }
+        .corner-tr { top: -12px; right: -12px; }
+        .corner-bl { bottom: -12px; left: -12px; }
+        .corner-br { bottom: -12px; right: -12px; }
+        /* Decorative side elements */
+        .side-decor {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--dark-brown);
+            border-radius: 50%;
+            opacity: 0.15;
+            z-index: 0;
+        }
+        .side-decor-1 {
+            left: 20px; top: 30%;
+            background: var(--pink);
+            animation: sideFloat1 8s ease-in-out infinite;
+        }
+        .side-decor-2 {
+            right: 20px; top: 60%;
+            background: var(--turquoise);
+            animation: sideFloat2 10s ease-in-out infinite;
+        }
+        .side-decor-3 {
+            left: 30px; bottom: 20%;
+            background: var(--yellow);
+            animation: sideFloat3 12s ease-in-out infinite;
+        }
+        .side-decor-4 {
+            right: 40px; top: 30%;
+            background: var(--yellow);
+            animation: sideFloat4 9s ease-in-out infinite;
+        }
+        @keyframes sideFloat1 {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes sideFloat2 {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(20px); }
+        }
+        @keyframes sideFloat3 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(10deg); }
+        }
+        @keyframes sideFloat4 {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(15px); }
+        }
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 4em;
+            text-align: center;
+            color: var(--pink);
+            text-shadow: 4px 4px 0 var(--yellow), 7px 7px 0 var(--turquoise), 10px 10px 0 var(--dark-brown);
+            transform: rotate(-2deg);
+            animation: wiggle 2.5s ease-in-out infinite;
+            letter-spacing: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            25% { transform: rotate(-4deg); }
+            75% { transform: rotate(0deg); }
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--dark-brown);
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-style: italic;
+            margin-bottom: 25px;
+        }
+        h2 {
+            color: var(--dark-brown);
+            font-size: 1.4em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+        .form-group { margin-bottom: 18px; }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--dark-brown);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            background: var(--cream);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 var(--pink);
+            transform: translate(-2px, -2px);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        button {
+            padding: 14px 24px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        button:active { transform: scale(0.95); }
+        .btn-pink { background: var(--pink); color: white; transform: rotate(-1deg); }
+        .btn-pink:hover { transform: rotate(-1deg) translate(-4px, -4px); box-shadow: 4px 4px 0 var(--dark-brown); }
+        .btn-turquoise { background: var(--turquoise); color: white; transform: rotate(1deg); }
+        .btn-turquoise:hover { transform: rotate(1deg) translate(-4px, -4px); box-shadow: 4px 4px 0 var(--dark-brown); }
+        .btn-white { background: white; color: var(--pink); transform: rotate(1deg); }
+        .btn-white:hover { transform: rotate(1deg) translate(-4px, -4px); box-shadow: 4px 4px 0 var(--dark-brown); }
+        .btn-yellow { background: var(--yellow); color: var(--dark-brown); transform: rotate(-1deg); }
+        .btn-yellow:hover { transform: rotate(-1deg) translate(-4px, -4px); box-shadow: 4px 4px 0 var(--dark-brown); }
+        .message {
+            padding: 14px;
+            border: 3px solid var(--dark-brown);
+            margin-bottom: 18px;
+            display: none;
+        }
+        .message.error { background: var(--pink); color: white; }
+        .message.success { background: var(--turquoise); color: white; }
+        .message.show { display: block; }
+        .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--dark-brown);
+        }
+        .switch-link a {
+            color: var(--pink);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .switch-link a:hover { text-decoration: underline; }
+        .btn-row { display: flex; gap: 12px; margin-bottom: 20px; }
+        .btn-row button { flex: 1; }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: var(--turquoise);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.85em;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+        @media (max-width: 500px) {
+            .title { font-size: 2.5em; }
+            .container { padding: 25px; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Extended background blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+    <div class="blob blob-5"></div>
+
+    <!-- Side decorative elements -->
+    <div class="side-decor side-decor-1"></div>
+    <div class="side-decor side-decor-2"></div>
+    <div class="side-decor side-decor-3"></div>
+    <div class="side-decor side-decor-4"></div>
+
+    <div class="page-wrapper">
+    <div class="container">
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        <a href="{% url 'home' %}" class="title">GROOVY</a>
+        <div class="subtitle">Tic Tac Toe Game</div>
+
+        {% block content %}{% endblock %}
+    </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/';
+        let currentUser = null;
+        let accessToken = localStorage.getItem('access');
+
+        // Check if user is logged in
+        async function checkAuth() {
+            accessToken = localStorage.getItem('access');
+            if (!accessToken) {
+                window.location.href = '{% url "login" %}';
+                return false;
+            }
+            try {
+                const response = await fetch(API_URL + 'auth/me/', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                if (response.ok) {
+                    currentUser = await response.json();
+                    return true;
+                } else {
+                    localStorage.removeItem('access');
+                    localStorage.removeItem('refresh');
+                    window.location.href = '{% url "login" %}';
+                    return false;
+                }
+            } catch (err) {
+                window.location.href = '{% url "login" %}';
+                return false;
+            }
+        }
+
+        // Show message
+        function showMessage(id, text, type) {
+            const div = document.getElementById(id);
+            if (div) {
+                div.textContent = text;
+                div.className = 'message ' + type + ' show';
+            }
+        }
+
+        // Logout
+        async function logout() {
+            const refresh = localStorage.getItem('refresh');
+            try {
+                await fetch(API_URL + 'auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ refresh })
+                });
+            } catch (e) {}
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            window.location.href = '{% url "login" %}';
+        }
+
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Logs - GROOVY Admin{% endblock %}
+
+{% block content %}
+<style>
+.log-entry {
+    padding: 12px 15px;
+    border: 2px solid var(--dark-brown);
+    margin-bottom: 10px;
+    background: white;
+}
+.log-time {
+    font-size: 0.85em;
+    color: var(--turquoise);
+    font-weight: bold;
+}
+.log-action {
+    margin-top: 5px;
+}
+.log-user {
+    color: var(--pink);
+    font-weight: bold;
+}
+.filter-form {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.filter-form select {
+    padding: 10px;
+    border: 3px solid var(--dark-brown);
+}
+</style>
+
+<div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>Activity Logs</h2>
+    <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
+</div>
+
+<div class="filter-form">
+    <select>
+        <option>All Actions</option>
+        <option>User Login</option>
+        <option>Game Created</option>
+        <option>Game Started</option>
+        <option>Game Finished</option>
+    </select>
+    <select>
+        <option>All Time</option>
+        <option>Today</option>
+        <option>Last 7 Days</option>
+        <option>Last 30 Days</option>
+    </select>
+</div>
+
+<div class="empty-state">
+    <span class="empty-emoji">&#128221;</span>
+    <p>No activity logs yet!</p>
+    <p style="font-size: 0.9em; opacity: 0.7; margin-top: 10px;">
+        Activity logging coming soon. Track user logins, game actions, and more.
+    </p>
+</div>
+
+<p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+    In a production app, create a Log model to track:
+</p>
+<ul style="text-align: center; list-style: none; font-size: 0.9em; color: #666;">
+    <li>- User registrations and logins</li>
+    <li>- Games created and joined</li>
+    <li>- Moves made</li>
+    <li>- Wins and draws</li>
+    <li>- Admin actions</li>
+</ul>
+{% endblock %}

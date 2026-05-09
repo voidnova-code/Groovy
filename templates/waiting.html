@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Waiting - GROOVY{% endblock %}
+
+{% block content %}
+<h2>Summoning an Opponent</h2>
+<p style="text-align: center; margin-bottom: 15px;">Share this code with your friend:</p>
+<div id="waiting-code" style="text-align: center; padding: 20px 30px; background: var(--yellow); border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive; font-size: 2.2em; letter-spacing: 8px; color: var(--dark-brown); margin: 25px 0;"></div>
+<div style="text-align: center; padding: 20px; background: var(--cream); border: 3px solid var(--dark-brown); margin-bottom: 20px;">
+    <p>Waiting for opponent to join...</p>
+    <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.7;">The page will update automatically</p>
+</div>
+<button class="btn-white" onclick="window.location.href='{% url 'dashboard' %}'" style="width: 100%;">Cancel</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRoomCode = new URLSearchParams(window.location.search).get('code');
+document.getElementById('waiting-code').textContent = currentRoomCode;
+
+let pollInterval = setInterval(async () => {
+    try {
+        const response = await fetch(API_URL + 'rooms/get_room/?code=' + currentRoomCode, {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status === 'playing') {
+                clearInterval(pollInterval);
+                window.location.href = '{% url "game" %}?code=' + currentRoomCode;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to check room');
+    }
+}, 2000);
+</script>
+{% endblock %}

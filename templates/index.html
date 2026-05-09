@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROOVY - Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Righteous&display=swap" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/razorpay.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --pink: #FF6B6B;
+            --turquoise: #4ECDC4;
+            --yellow: #FFE66D;
+            --cream: #FFF5E6;
+            --dark-brown: #2C1810;
+        }
+
+        body {
+            font-family: 'Righteous', cursive;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, var(--cream), #FFD6E0, #D6F0FF, #D6FFE8, var(--cream));
+            background-size: 400% 400%;
+            animation: rainbowBg 10s ease infinite;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        @keyframes rainbowBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob-1 {
+            width: 200px;
+            height: 200px;
+            background: var(--pink);
+            top: 10%;
+            left: 10%;
+            animation: float1 8s ease-in-out infinite;
+        }
+
+        .blob-2 {
+            width: 150px;
+            height: 150px;
+            background: var(--turquoise);
+            top: 60%;
+            right: 15%;
+            animation: float2 10s ease-in-out infinite;
+        }
+
+        .blob-3 {
+            width: 180px;
+            height: 180px;
+            background: var(--yellow);
+            bottom: 20%;
+            left: 20%;
+            animation: float3 12s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 30% 70% 70% 30%; }
+            33% { transform: translate(30px, -30px) rotate(10deg); border-radius: 70% 30% 30% 70%; }
+            66% { transform: translate(-20px, 20px) rotate(-10deg); border-radius: 30% 70% 70% 30%; }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 70% 30% 30% 70%; }
+            33% { transform: translate(-40px, -20px) rotate(-15deg); border-radius: 30% 70% 70% 30%; }
+            66% { transform: translate(30px, 30px) rotate(10deg); border-radius: 70% 30% 30% 70%; }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 30% 70% 70% 30%; }
+            33% { transform: translate(20px, 40px) rotate(5deg); border-radius: 70% 30% 70% 30%; }
+            66% { transform: translate(-30px, -10px) rotate(-10deg); border-radius: 30% 70% 30% 70%; }
+        }
+
+        .container {
+            background: white;
+            border: 5px solid var(--dark-brown);
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            transform: rotate(-1deg);
+            box-shadow: 8px 8px 0 var(--pink), 12px 12px 0 var(--turquoise);
+            position: relative;
+            z-index: 1;
+        }
+
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--yellow);
+            border-radius: 50%;
+            border: 3px solid var(--dark-brown);
+        }
+
+        .corner-tl { top: -10px; left: -10px; }
+        .corner-tr { top: -10px; right: -10px; }
+        .corner-bl { bottom: -10px; left: -10px; }
+        .corner-br { bottom: -10px; right: -10px; }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3.5em;
+            text-align: center;
+            color: var(--pink);
+            text-shadow: 4px 4px 0 var(--yellow), 6px 6px 0 var(--turquoise), 8px 8px 0 var(--dark-brown);
+            transform: rotate(-2deg);
+            animation: wiggle 2s ease-in-out infinite;
+            letter-spacing: 4px;
+            cursor: pointer;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            25% { transform: rotate(-4deg); }
+            75% { transform: rotate(0deg); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--dark-brown);
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-style: italic;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: var(--dark-brown);
+            font-size: 1.4em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--dark-brown);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            background: var(--cream);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 var(--pink);
+            transform: translate(-2px, -2px);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            padding: 14px 24px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Righteous', cursive;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-pink {
+            background: var(--pink);
+            color: white;
+            transform: rotate(-1deg);
+        }
+
+        .btn-pink:hover {
+            transform: rotate(-1deg) translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .btn-turquoise {
+            background: var(--turquoise);
+            color: white;
+            transform: rotate(1deg);
+        }
+
+        .btn-turquoise:hover {
+            transform: rotate(1deg) translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--pink);
+            transform: rotate(1deg);
+        }
+
+        .btn-white:hover {
+            transform: rotate(1deg) translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .btn-yellow {
+            background: var(--yellow);
+            color: var(--dark-brown);
+            transform: rotate(-1deg);
+        }
+
+        .btn-yellow:hover {
+            transform: rotate(-1deg) translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .message {
+            padding: 14px;
+            border: 3px solid var(--dark-brown);
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        .message.error {
+            background: var(--pink);
+            color: white;
+        }
+
+        .message.success {
+            background: var(--turquoise);
+            color: white;
+        }
+
+        .message.show {
+            display: block;
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--dark-brown);
+        }
+
+        .switch-link a {
+            color: var(--pink);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-row button {
+            flex: 1;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--dark-brown);
+        }
+
+        .welcome-text span {
+            color: var(--pink);
+        }
+
+        .join-form {
+            display: none;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: var(--cream);
+            border: 3px solid var(--dark-brown);
+        }
+
+        .join-form.active {
+            display: block;
+            animation: popIn 0.3s ease;
+        }
+
+        .game-list {
+            margin-bottom: 20px;
+        }
+
+        .game-item {
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 3px solid var(--dark-brown);
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .game-item:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .game-item-code {
+            font-family: 'Fredoka One', cursive;
+            color: var(--pink);
+            font-size: 1.2em;
+        }
+
+        .game-item-status {
+            color: var(--dark-brown);
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.2);
+        }
+
+        .no-games {
+            color: var(--dark-brown);
+            opacity: 0.7;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: var(--turquoise);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.85em;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Donate Section */
+        .donate-section {
+            text-align: center;
+        }
+
+        .donate-header {
+            font-size: 2em;
+            color: var(--pink);
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 0 var(--yellow);
+        }
+
+        .donate-subtitle {
+            color: var(--dark-brown);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .donate-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .donate-option {
+            padding: 15px 25px;
+            border: 3px solid var(--dark-brown);
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: var(--dark-brown);
+        }
+
+        .donate-option:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 4px 4px 0 var(--dark-brown);
+        }
+
+        .donate-option.selected {
+            background: var(--pink);
+            color: white;
+        }
+
+        .custom-amount {
+            margin-bottom: 20px;
+        }
+
+        .custom-amount input {
+            text-align: center;
+            font-size: 1.3em;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .razorpay-btn {
+            background: var(--turquoise);
+            color: white;
+            font-size: 1.2em;
+            padding: 18px 30px;
+            width: 100%;
+        }
+
+        .donate-heart {
+            font-size: 3em;
+            animation: heartbeat 1s ease-in-out infinite;
+            display: block;
+            margin: 20px 0;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* About Section */
+        .about-section {
+            text-align: center;
+        }
+
+        .developer-card {
+            background: var(--cream);
+            border: 3px solid var(--dark-brown);
+            padding: 25px;
+            margin-bottom: 25px;
+            transform: rotate(1deg);
+        }
+
+        .dev-avatar {
+            font-size: 4em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .dev-name {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.5em;
+            color: var(--pink);
+            margin-bottom: 5px;
+        }
+
+        .dev-role {
+            color: var(--turquoise);
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .dev-bio {
+            color: var(--dark-brown);
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .tech-badge {
+            background: var(--yellow);
+            padding: 6px 12px;
+            border: 2px solid var(--dark-brown);
+            font-size: 0.85em;
+            color: var(--dark-brown);
+        }
+
+        /* Feedback Section */
+        .feedback-form {
+            text-align: left;
+        }
+
+        .feedback-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .star {
+            font-size: 2em;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover, .star.active {
+            color: var(--yellow);
+            transform: scale(1.1);
+        }
+
+        .star.selected {
+            color: var(--yellow);
+        }
+
+        .all-stars {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .all-stars .star {
+            font-size: 1.8em;
+        }
+
+        .submitted-feedback {
+            text-align: center;
+            padding: 20px;
+            background: var(--cream);
+            border: 3px solid var(--dark-brown);
+        }
+
+        .feedback-thanks {
+            font-size: 2em;
+            color: var(--pink);
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .score-box {
+            padding: 12px;
+            border: 3px solid var(--dark-brown);
+            text-align: center;
+            color: white;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .score-box.x-score {
+            background: linear-gradient(135deg, var(--pink), #FF8A8A);
+            transform: rotate(-2deg);
+        }
+
+        .score-box.o-score {
+            background: linear-gradient(135deg, var(--turquoise), #7EDDD6);
+            transform: rotate(3deg);
+            margin-top: 10px;
+        }
+
+        .score-box.draw-score {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--yellow), #FFE68A);
+            color: var(--dark-brown);
+            transform: rotate(1deg);
+        }
+
+        .score-value {
+            font-size: 1.8em;
+        }
+
+        .score-label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Game Board */
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--cream);
+            border: 3px solid var(--dark-brown);
+        }
+
+        .player-info .player-symbol {
+            font-size: 2.2em;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .player-symbol.x {
+            color: var(--pink);
+        }
+
+        .player-symbol.o {
+            color: var(--turquoise);
+        }
+
+        .player-name {
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--dark-brown);
+            margin-top: 4px;
+        }
+
+        .vs-text {
+            font-size: 1.2em;
+            color: var(--dark-brown);
+            align-self: center;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 15px;
+            font-size: 1.4em;
+            font-family: 'Fredoka One', cursive;
+            margin-bottom: 20px;
+            border: 3px solid var(--dark-brown);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .turn-indicator.x-turn {
+            background: var(--pink);
+            color: white;
+        }
+
+        .turn-indicator.o-turn {
+            background: var(--turquoise);
+            color: white;
+        }
+
+        .turn-indicator.waiting {
+            background: var(--yellow);
+            color: var(--dark-brown);
+            animation: none;
+        }
+
+        .turn-indicator.finished {
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 12px;
+            background: var(--yellow);
+            border: 3px solid var(--dark-brown);
+            transform: rotate(0.5deg);
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: white;
+            border: 3px solid var(--dark-brown);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.8em;
+            font-family: 'Fredoka One', cursive;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cell:hover:not(.taken) {
+            transform: scale(1.08) rotate(3deg);
+            box-shadow: 0 0 15px var(--pink);
+        }
+
+        .cell.taken {
+            cursor: not-allowed;
+        }
+
+        .cell.x {
+            color: var(--pink);
+        }
+
+        .cell.o {
+            color: var(--turquoise);
+        }
+
+        .cell.winning {
+            background: var(--yellow);
+            animation: winPulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05) rotate(5deg); }
+        }
+
+        .room-code-display {
+            text-align: center;
+            padding: 12px 20px;
+            background: var(--yellow);
+            border: 3px solid var(--dark-brown);
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.8em;
+            letter-spacing: 6px;
+            color: var(--dark-brown);
+            margin-bottom: 20px;
+        }
+
+        .waiting-section {
+            display: none;
+        }
+
+        .waiting-section.active {
+            display: block;
+        }
+
+        .waiting-code {
+            text-align: center;
+            padding: 20px 30px;
+            background: var(--yellow);
+            border: 3px solid var(--dark-brown);
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.2em;
+            letter-spacing: 8px;
+            color: var(--dark-brown);
+            margin: 25px 0;
+        }
+
+        .waiting-message {
+            text-align: center;
+            padding: 20px;
+            background: var(--cream);
+            border: 3px solid var(--dark-brown);
+            margin-bottom: 20px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 24, 16, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border: 5px solid var(--dark-brown);
+            padding: 40px;
+            text-align: center;
+            transform: rotate(-3deg);
+            animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0) rotate(-10deg); }
+            100% { transform: scale(1) rotate(-3deg); }
+        }
+
+        .modal-emoji {
+            font-size: 4em;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2em;
+            color: var(--pink);
+            text-shadow: 3px 3px 0 var(--yellow), 5px 5px 0 var(--dark-brown);
+            margin: 15px 0;
+        }
+
+        .modal-message {
+            font-size: 1.2em;
+            color: var(--dark-brown);
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 500px) {
+            .title { font-size: 2.5em; }
+            .container { padding: 25px; }
+            .cell { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="container">
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        <div class="title" onclick="showDashboard()">GROOVY</div>
+        <div class="subtitle">Tic Tac Toe Game</div>
+
+        <!-- Auth Section -->
+        <div id="auth-section" class="section active">
+            <div id="login-form">
+                <h2>Login</h2>
+                <div id="login-message" class="message"></div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="Enter password">
+                </div>
+                <button class="btn-pink" onclick="login()" style="width: 100%;">Login</button>
+                <p class="switch-link">Don't have an account? <a onclick="showRegister()">Register</a></p>
+            </div>
+
+            <div id="register-form" style="display: none;">
+                <h2>Register</h2>
+                <div id="register-message" class="message"></div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="register-username" placeholder="Pick a cool username">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="register-password" placeholder="Your secret code">
+                </div>
+                <button class="btn-turquoise" onclick="register()" style="width: 100%;">Register</button>
+                <p class="switch-link">Already have an account? <a onclick="showLogin()">Login</a></p>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard-section" class="section">
+            <div class="welcome-text">Welcome, <span id="user-display"></span>!</div>
+
+            <div class="btn-row">
+                <button class="btn-pink" onclick="createRoom()">Create Game</button>
+                <button class="btn-turquoise" onclick="showJoinForm()">Join Game</button>
+            </div>
+
+            <div id="join-form" class="join-form">
+                <div class="form-group">
+                    <label>Room Code</label>
+                    <input type="text" id="join-room-code" placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase;">
+                </div>
+                <div class="btn-row" style="margin-bottom: 0;">
+                    <button class="btn-pink" onclick="joinRoom()">Join</button>
+                    <button class="btn-white" onclick="hideJoinForm()">Cancel</button>
+                </div>
+            </div>
+
+            <h2>My Games</h2>
+            <div id="my-games" class="game-list"></div>
+
+            <div class="nav-links">
+                <a onclick="showDonate()">Donate</a> |
+                <a onclick="showAbout()">About</a>
+            </div>
+
+            <button class="btn-white" onclick="logout()" style="width: 100%;">Logout</button>
+        </div>
+
+        <!-- Game Section -->
+        <div id="game-section" class="section">
+            <div class="score-section">
+                <div class="score-box x-score">
+                    <div class="score-value" id="score-x">0</div>
+                    <div class="score-label">X Wins</div>
+                </div>
+                <div class="score-box o-score">
+                    <div class="score-value" id="score-o">0</div>
+                    <div class="score-label">O Wins</div>
+                </div>
+                <div class="score-box draw-score">
+                    <div class="score-value" id="score-draw">0</div>
+                    <div class="score-label">Draws</div>
+                </div>
+            </div>
+
+            <div class="player-info">
+                <div>
+                    <div class="player-symbol x">X</div>
+                    <div class="player-name" id="player-x-name"></div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div>
+                    <div class="player-symbol o">O</div>
+                    <div class="player-name" id="player-o-name"></div>
+                </div>
+            </div>
+
+            <div id="room-code-display" class="room-code-display"></div>
+            <div id="turn-indicator" class="turn-indicator waiting">Waiting...</div>
+
+            <div class="game-board" id="game-board">
+                <div class="cell" data-index="0" onclick="makeMove(0)"></div>
+                <div class="cell" data-index="1" onclick="makeMove(1)"></div>
+                <div class="cell" data-index="2" onclick="makeMove(2)"></div>
+                <div class="cell" data-index="3" onclick="makeMove(3)"></div>
+                <div class="cell" data-index="4" onclick="makeMove(4)"></div>
+                <div class="cell" data-index="5" onclick="makeMove(5)"></div>
+                <div class="cell" data-index="6" onclick="makeMove(6)"></div>
+                <div class="cell" data-index="7" onclick="makeMove(7)"></div>
+                <div class="cell" data-index="8" onclick="makeMove(8)"></div>
+            </div>
+
+            <div class="nav-links">
+                <a onclick="showDonate()">Donate</a> |
+                <a onclick="showAbout()">About</a>
+            </div>
+
+            <button class="btn-white" onclick="backToDashboard()" style="width: 100%;">Back</button>
+        </div>
+
+        <!-- Waiting Section -->
+        <div id="waiting-section" class="section">
+            <h2>Summoning an Opponent</h2>
+            <p>Share this code with your friend:</p>
+            <div id="waiting-code" class="waiting-code"></div>
+            <div class="waiting-message">
+                <p>Waiting for opponent to join...</p>
+                <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.7;">The page will update automatically</p>
+            </div>
+            <button class="btn-white" onclick="backToDashboard()" style="width: 100%;">Cancel</button>
+        </div>
+
+        <!-- Donate Section -->
+        <div id="donate-section" class="section">
+            <div class="donate-header">Support the Game!</div>
+            <p class="donate-subtitle">Fuel the void! Your support helps me create more epic games. Even a coffee counts!</p>
+
+            <span class="donate-heart">&#10084;</span>
+
+            <div class="donate-options">
+                <div class="donate-option" onclick="selectDonate(10)">&#8377;10</div>
+                <div class="donate-option" onclick="selectDonate(25)">&#8377;25</div>
+                <div class="donate-option" onclick="selectDonate(50)">&#8377;50</div>
+                <div class="donate-option" onclick="selectDonate(100)">&#8377;100</div>
+            </div>
+
+            <div class="custom-amount">
+                <label>Or enter custom amount</label>
+                <input type="number" id="custom-amount" placeholder="Enter amount" min="1">
+            </div>
+
+            <button class="btn-turquoise razorpay-btn" onclick="processDonation()">Donate Now</button>
+
+            <div class="nav-links" style="margin-top: 20px;">
+                <a onclick="showDashboard()">Back to Game</a>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div id="about-section" class="section">
+            <h2>About</h2>
+
+            <div class="developer-card">
+                <span class="dev-avatar">&#128187;</span>
+                <div class="dev-name">Voidnova</div>
+                <div class="dev-role">The Wizard Behind the Magic</div>
+                <p class="dev-bio">Greetings, mortal! I am Voidnova - a mysterious code wizard who emerged from the digital void to bring you this glorious Tic Tac Toe experience. Some say I'm just a lonely developer... but they don't know about the 3 AM coding sessions and the infinite snacks!</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">Python</span>
+                    <span class="tech-badge">Django</span>
+                    <span class="tech-badge">JavaScript</span>
+                    <span class="tech-badge">Magic</span>
+                </div>
+            </div>
+
+            <h2>Feedback</h2>
+            <div id="feedback-form" class="feedback-form">
+                <p style="text-align: center; margin-bottom: 15px; color: var(--dark-brown);">Spill the tea! Or feedback... whichever you prefer!</p>
+
+                <div class="all-stars" id="star-rating">
+                    <span class="star" data-rating="1" onclick="setRating(1)">&#9733;</span>
+                    <span class="star" data-rating="2" onclick="setRating(2)">&#9733;</span>
+                    <span class="star" data-rating="3" onclick="setRating(3)">&#9733;</span>
+                    <span class="star" data-rating="4" onclick="setRating(4)">&#9733;</span>
+                    <span class="star" data-rating="5" onclick="setRating(5)">&#9733;</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Your Feedback</label>
+                    <textarea id="feedback-text" placeholder="Tell us what you liked, what could be better..."></textarea>
+                </div>
+
+                <button class="btn-pink" onclick="submitFeedback()" style="width: 100%;">Submit Feedback</button>
+            </div>
+
+            <div id="feedback-submitted" class="submitted-feedback" style="display: none;">
+                <div class="feedback-thanks">&#10084; You're epic!</div>
+                <p style="margin-top: 10px;">Your feedback means a lot!</p>
+            </div>
+
+            <div class="nav-links" style="margin-top: 20px;">
+                <a onclick="showDashboard()">Back to Game</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-emoji" id="modal-emoji">&#127881;</div>
+            <div class="modal-title" id="modal-title">You Win!</div>
+            <p class="modal-message" id="modal-message">Victory is yours!</p>
+            <button class="btn-turquoise" onclick="closeModal()" style="width: 100%;">Play Again</button>
+            <button class="btn-white" onclick="modalBackToDashboard()" style="width: 100%; margin-top: 10px;">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/';
+        let currentUser = null;
+        let accessToken = localStorage.getItem('access');
+        let currentRoomCode = null;
+        let pollInterval = null;
+        let scores = JSON.parse(localStorage.getItem('ttt_scores')) || { x: 0, o: 0, draw: 0 };
+        let selectedDonation = 0;
+        let currentRating = 0;
+
+        // Initialize
+        document.getElementById('score-x').textContent = scores.x;
+        document.getElementById('score-o').textContent = scores.o;
+        document.getElementById('score-draw').textContent = scores.draw;
+
+        // Show sections
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showLogin() {
+            showSection('auth-section');
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+        }
+
+        function showRegister() {
+            showSection('auth-section');
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        async function showDashboard() {
+            showSection('dashboard-section');
+            document.getElementById('user-display').textContent = currentUser.username;
+            document.getElementById('join-form').classList.remove('active');
+            await loadGames();
+            startPolling();
+        }
+
+        function showDonate() {
+            showSection('donate-section');
+            stopPolling();
+        }
+
+        function showAbout() {
+            showSection('about-section');
+            // Reset feedback form
+            document.getElementById('feedback-form').style.display = 'block';
+            document.getElementById('feedback-submitted').style.display = 'none';
+            setRating(0);
+            document.getElementById('feedback-text').value = '';
+            stopPolling();
+        }
+
+        // Auth functions
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            if (!username || !password) {
+                showMessage('register-message', 'Hey! Fill in the blanks!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL + 'auth/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('access', data.tokens.access);
+                    localStorage.setItem('refresh', data.tokens.refresh);
+                    currentUser = data.user;
+                    showDashboard();
+                } else {
+                    showMessage('register-message', Object.values(data).flat().join(', '), 'error');
+                }
+            } catch (err) {
+                showMessage('register-message', 'Whoops! The internet hiccupped. Try again!', 'error');
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) {
+                showMessage('login-message', 'Hey! Fill in the blanks!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL + 'auth/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('access', data.tokens.access);
+                    localStorage.setItem('refresh', data.tokens.refresh);
+                    currentUser = data.user;
+                    showDashboard();
+                } else {
+                    showMessage('login-message', data.error || 'Nope! Wrong password or something...', 'error');
+                }
+            } catch (err) {
+                showMessage('login-message', 'Whoops! The internet hiccupped. Try again!', 'error');
+            }
+        }
+
+        async function logout() {
+            const refresh = localStorage.getItem('refresh');
+            try {
+                await fetch(API_URL + 'auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ refresh })
+                });
+            } catch (e) {}
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            stopPolling();
+            showLogin();
+        }
+
+        function showMessage(id, text, type) {
+            const div = document.getElementById(id);
+            div.textContent = text;
+            div.className = 'message ' + type + ' show';
+        }
+
+        async function checkAuth() {
+            accessToken = localStorage.getItem('access');
+            if (!accessToken) {
+                showLogin();
+                return false;
+            }
+
+            try {
+                const response = await fetch(API_URL + 'auth/me/', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    return true;
+                } else {
+                    localStorage.removeItem('access');
+                    localStorage.removeItem('refresh');
+                    return false;
+                }
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // Game functions
+        function showJoinForm() {
+            document.getElementById('join-form').classList.add('active');
+        }
+
+        function hideJoinForm() {
+            document.getElementById('join-form').classList.remove('active');
+            document.getElementById('join-room-code').value = '';
+        }
+
+        async function createRoom() {
+            try {
+                const response = await fetch(API_URL + 'rooms/', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                const data = await response.json();
+                currentRoomCode = data.code;
+
+                if (data.status === 'waiting') {
+                    showWaitingRoom(data.code);
+                } else {
+                    showGame(currentRoomCode);
+                }
+            } catch (err) {
+                alert('Oops! The room exploded. Try again!');
+            }
+        }
+
+        async function joinRoom() {
+            const code = document.getElementById('join-room-code').value.toUpperCase();
+            if (!code) return;
+
+            try {
+                const response = await fetch(API_URL + 'rooms/join/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ room_code: code })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentRoomCode = code;
+                    hideJoinForm();
+                    showGame(code);
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Nope! That room is a ghost town.');
+                }
+            } catch (err) {
+                alert('The room is in another castle! Try a different code.');
+            }
+        }
+
+        function showWaitingRoom(code) {
+            showSection('waiting-section');
+            document.getElementById('waiting-code').textContent = code;
+            startWaitingPoll(code);
+        }
+
+        function showGame(code) {
+            showSection('game-section');
+            document.getElementById('room-code-display').textContent = code;
+            currentRoomCode = code;
+            loadGameState(code);
+            startPolling();
+        }
+
+        async function loadGameState(code) {
+            try {
+                const response = await fetch(API_URL + 'rooms/get_room/?code=' + code, {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateGameUI(data);
+                }
+            } catch (err) {
+                console.error('Failed to load game state');
+            }
+        }
+
+        function updateGameUI(data) {
+            document.getElementById('player-x-name').textContent = data.player_x_username;
+            document.getElementById('player-o-name').textContent = data.player_o_username || 'Waiting...';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                cell.textContent = data.board_state[index];
+                cell.classList.remove('x', 'o', 'taken', 'winning');
+                if (data.board_state[index]) {
+                    cell.classList.add('taken');
+                    cell.classList.add(data.board_state[index].toLowerCase());
+                }
+            });
+
+            const isPlayerX = currentUser.id === data.player_x;
+            const isPlayerO = currentUser.id === data.player_o;
+            const isMyTurn = (isPlayerX && data.current_turn === 'X') || (isPlayerO && data.current_turn === 'O');
+
+            const turnDiv = document.getElementById('turn-indicator');
+            turnDiv.className = 'turn-indicator';
+
+            if (data.status === 'finished') {
+                turnDiv.classList.add('finished');
+                if (data.is_draw) {
+                    turnDiv.textContent = "It's a Draw!";
+                    turnDiv.classList.add('waiting');
+                    scores.draw++;
+                    document.getElementById('score-draw').textContent = scores.draw;
+                } else {
+                    const isWinner = data.winner === currentUser.id;
+                    const winnerSymbol = data.winner === data.player_x ? 'X' : 'O';
+                    turnDiv.textContent = isWinner ? 'You Win!' : `${winnerSymbol} Wins!`;
+                    turnDiv.classList.add(winnerSymbol === 'X' ? 'x-turn' : 'o-turn');
+
+                    if (isWinner) {
+                        if (isPlayerX) { scores.x++; document.getElementById('score-x').textContent = scores.x; }
+                        else { scores.o++; document.getElementById('score-o').textContent = scores.o; }
+                    }
+                    localStorage.setItem('ttt_scores', JSON.stringify(scores));
+
+                    const winningCombo = checkWinner(data.board_state);
+                    if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
+
+                    setTimeout(() => {
+                        showModal(data.winner === currentUser.id ? 'You Win!' : data.is_draw ? "It's a Draw!" : `${data.winner === data.player_x ? 'X' : 'O'} Wins!`,
+                            data.is_draw, isWinner);
+                    }, 500);
+                }
+            } else if (data.status === 'playing') {
+                turnDiv.textContent = isMyTurn ? "Your Turn!" : "Opponent's Turn";
+                turnDiv.classList.add(data.current_turn === 'X' ? 'x-turn' : 'o-turn');
+            } else {
+                turnDiv.textContent = 'Waiting for opponent...';
+                turnDiv.classList.add('waiting');
+            }
+        }
+
+        function checkWinner(board) {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let combo of wins) {
+                if (board[combo[0]] && board[combo[0]] === board[combo[1]] && board[combo[0]] === board[combo[2]]) {
+                    return combo;
+                }
+            }
+            return null;
+        }
+
+        function showModal(title, isDraw, isWin) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-emoji').textContent = isDraw ? '&#129309;' : (isWin ? '&#127881;' : '&#128542;');
+            document.getElementById('modal-message').textContent = isDraw ? 'Well, that was TENSE!' : (isWin ? 'You absolute legend!' : 'Better luck next time, champ!');
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            showDashboard();
+        }
+
+        function modalBackToDashboard() {
+            document.getElementById('modal').classList.remove('active');
+            backToDashboard();
+        }
+
+        async function makeMove(position) {
+            if (!currentRoomCode) return;
+
+            try {
+                const response = await fetch(API_URL + 'rooms/move/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    },
+                    body: JSON.stringify({ room_code: currentRoomCode, position: position })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateGameUI(data);
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Hey! You can\'t do that there!');
+                }
+            } catch (err) {
+                alert('The move got lost in the void! Try again.');
+            }
+        }
+
+        function backToDashboard() {
+            stopPolling();
+            currentRoomCode = null;
+            showDashboard();
+        }
+
+        // Polling
+        function startPolling() {
+            stopPolling();
+            pollInterval = setInterval(async () => {
+                if (currentRoomCode) await loadGameState(currentRoomCode);
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        }
+
+        let waitingPollInterval = null;
+
+        function startWaitingPoll(code) {
+            stopWaitingPoll();
+            waitingPollInterval = setInterval(async () => {
+                await loadGameState(code);
+                const response = await fetch(API_URL + 'rooms/get_room/?code=' + code, {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'playing') {
+                        stopWaitingPoll();
+                        showGame(code);
+                    }
+                }
+            }, 2000);
+        }
+
+        function stopWaitingPoll() {
+            if (waitingPollInterval) { clearInterval(waitingPollInterval); waitingPollInterval = null; }
+        }
+
+        async function loadGames() {
+            const myGamesDiv = document.getElementById('my-games');
+
+            try {
+                const response = await fetch(API_URL + 'rooms/my_games/', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                const myGames = await response.json();
+
+                if (myGames.length === 0) {
+                    myGamesDiv.innerHTML = '<div class="no-games">No games yet? Let\'s change that!</div>';
+                } else {
+                    myGamesDiv.innerHTML = myGames.map(game => {
+                        let statusText = '';
+                        if (game.status === 'waiting') statusText = 'Waiting for opponent';
+                        else if (game.status === 'playing') statusText = 'In Progress';
+                        else if (game.is_draw) statusText = 'Draw';
+                        else statusText = `Won by ${game.winner_username}`;
+
+                        const isHost = game.player_x === currentUser.id;
+                        const deleteBtn = isHost ? `<button class="btn-delete" onclick="event.stopPropagation(); deleteGame('${game.code}')" title="Delete room">&#128465;</button>` : '';
+
+                        return `<div class="game-item" onclick="showGame('${game.code}')">
+                            <div>
+                                <div class="game-item-code">${game.code}</div>
+                                <div class="game-item-status">${statusText}</div>
+                            </div>
+                            ${deleteBtn}
+                        </div>`;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load games');
+            }
+        }
+
+        // Donation functions
+        function selectDonate(amount) {
+            selectedDonation = amount;
+            document.querySelectorAll('.donate-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('custom-amount').value = '';
+        }
+
+        function processDonation() {
+            const customAmount = document.getElementById('custom-amount').value;
+            const amount = customAmount ? parseInt(customAmount) : selectedDonation;
+
+            if (!amount || amount < 1) {
+                alert('Hey! Pick a number, any number!');
+                return;
+            }
+
+            // Fetch Razorpay key from server
+            fetch(API_URL + 'auth/razorpay-key/')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.key) {
+                        alert('Donation not set up yet, but you rock for trying!');
+                        return;
+                    }
+
+                    const options = {
+                        key: data.key,
+                        amount: amount * 100,
+                        currency: 'INR',
+                        name: 'GROOVY Tic Tac Toe',
+                        description: 'Support the Game!',
+                        handler: function(response) {
+                            alert('Woohoo! You\'re a legend! ');
+                        },
+                        prefill: {
+                            name: currentUser ? currentUser.username : 'Guest',
+                            email: currentUser ? currentUser.email : ''
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                })
+                .catch(err => {
+                    alert('Coming soon! But you\'re awesome for wanting to support!');
+                });
+        }
+
+        // Feedback functions
+        function setRating(rating) {
+            currentRating = rating;
+            document.querySelectorAll('.star').forEach((star, index) => {
+                star.classList.toggle('selected', index < rating);
+            });
+        }
+
+        function submitFeedback() {
+            const feedback = document.getElementById('feedback-text').value;
+
+            if (!feedback.trim() && currentRating === 0) {
+                alert('C\'mon! Drop a star or some thoughts!');
+                return;
+            }
+
+            // Store feedback in localStorage (in real app, send to backend)
+            const feedbackData = {
+                rating: currentRating,
+                feedback: feedback,
+                username: currentUser ? currentUser.username : 'Anonymous',
+                date: new Date().toISOString()
+            };
+
+            const feedbacks = JSON.parse(localStorage.getItem('feedbacks')) || [];
+            feedbacks.push(feedbackData);
+            localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+
+            document.getElementById('feedback-form').style.display = 'none';
+            document.getElementById('feedback-submitted').style.display = 'block';
+        }
+
+        // Delete game function
+        async function deleteGame(code) {
+            if (!confirm('Are you sure you want to delete this room? It\'s gone forever!')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL + 'rooms/delete/?code=' + code, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                if (response.ok) {
+                    alert('Room deleted! Poof!');
+                    await loadGames();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Couldn\'t delete the room!');
+                }
+            } catch (err) {
+                alert('The void didn\'t accept it. Try again!');
+            }
+        }
+
+        // Initialize
+        async function init() {
+            const authenticated = await checkAuth();
+            if (authenticated) {
+                await showDashboard();
+            } else {
+                showLogin();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

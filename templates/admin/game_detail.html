@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Game Details - GROOVY Admin{% endblock %}
+
+{% block content %}
+<style>
+.game-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+.detail-card {
+    background: var(--cream);
+    border: 3px solid var(--dark-brown);
+    padding: 20px;
+}
+.detail-card h3 {
+    margin-bottom: 15px;
+    color: var(--pink);
+}
+.board-preview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-top: 15px;
+}
+.board-cell {
+    aspect-ratio: 1;
+    background: white;
+    border: 2px solid var(--dark-brown);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-family: 'Fredoka One';
+}
+.board-cell.x { color: var(--pink); }
+.board-cell.o { color: var(--turquoise); }
+</style>
+
+<div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>Game: {{ game.code }}</h2>
+    <a href="/admin/games/" class="btn-white">Back to Games</a>
+</div>
+
+<div class="game-details">
+    <div class="detail-card">
+        <h3>Game Info</h3>
+        <p><strong>Status:</strong>
+            {% if game.status == 'playing' %}<span class="status-playing">Playing</span>
+            {% elif game.status == 'waiting' %}<span class="status-waiting">Waiting</span>
+            {% else %}<span class="status-finished">Finished</span>{% endif %}
+        </p>
+        <p><strong>Current Turn:</strong> {{ game.current_turn }}</p>
+        <p><strong>Created:</strong> {{ game.created_at }}</p>
+        <p><strong>Updated:</strong> {{ game.updated_at }}</p>
+    </div>
+
+    <div class="detail-card">
+        <h3>Players</h3>
+        <p><strong>Player X (Host):</strong> {{ game.player_x.username }}</p>
+        <p><strong>Player O:</strong> {% if game.player_o %}{{ game.player_o.username }}{% else %}Not joined yet{% endif %}</p>
+        {% if game.winner %}
+        <p><strong>Winner:</strong> {{ game.winner.username }}</p>
+        {% endif %}
+        {% if game.is_draw %}
+        <p><strong>Result:</strong> Draw!</p>
+        {% endif %}
+    </div>
+</div>
+
+<h3>Board State</h3>
+<div class="board-preview">
+    {% for cell in game.board_state %}
+    <div class="board-cell {% if cell %}{{ cell|lower }}{% endif %}">
+        {% if cell %}{{ cell }}{% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<h3>Move History</h3>
+<table class="admin-table">
+    <tr>
+        <th>#</th>
+        <th>Player</th>
+        <th>Symbol</th>
+        <th>Position</th>
+        <th>Time</th>
+    </tr>
+    {% for move in moves %}
+    <tr>
+        <td>{{ move.move_number }}</td>
+        <td>{{ move.player.username }}</td>
+        <td class="{% if move.symbol == 'X' %}x{% else %}o{% endif %}" style="font-weight: bold;">{{ move.symbol }}</td>
+        <td>{{ move.position }}</td>
+        <td>{{ move.created_at|date:"H:i:s" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No moves yet!</td></tr>
+    {% endfor %}
+</table>
+
+<div style="margin-top: 25px;">
+    <button class="btn-danger" onclick="deleteGame({{ game.id }})" style="padding: 15px 30px;">Delete This Game</button>
+</div>
+
+<script>
+function deleteGame(gameId) {
+    if (confirm('Are you sure you want to permanently delete this game?')) {
+        fetch('/admin/game/delete/' + gameId + '/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(() => window.location.href = '/admin/games/');
+    }
+}
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

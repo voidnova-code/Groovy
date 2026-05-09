@@ -1,0 +1,22 @@
+# Django
+Django>=5.0,<6.0
+
+# Database
+psycopg2-binary>=2.9.9
+dj-database-url>=2.1.0
+
+# REST Framework
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.3.0
+
+# CORS
+django-cors-headers>=4.3.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Static files compression
+whitenoise>=6.5.0
+
+# Gunicorn for production
+gunicorn>=21.2.0

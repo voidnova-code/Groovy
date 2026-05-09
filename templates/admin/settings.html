@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - GROOVY Admin{% endblock %}
+
+{% block content %}
+<style>
+.setting-card {
+    background: var(--cream);
+    border: 3px solid var(--dark-brown);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 2px solid #ddd;
+}
+.toggle {
+    width: 50px;
+    height: 26px;
+    background: #ccc;
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+}
+.toggle.active {
+    background: var(--turquoise);
+}
+.toggle::after {
+    content: '';
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.3s;
+}
+.toggle.active::after {
+    left: 26px;
+}
+</style>
+
+<div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>System Settings</h2>
+    <a href="/admin/dashboard/" class="btn-white">Back to Dashboard</a>
+</div>
+
+<div class="setting-card">
+    <h3>General Settings</h3>
+
+    <div class="setting-row">
+        <div>
+            <strong>Allow New Registrations</strong>
+            <p style="font-size: 0.85em; color: #666;">Users can create new accounts</p>
+        </div>
+        <div class="toggle {% if settings.allow_registration %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
+    </div>
+
+    <div class="setting-row">
+        <div>
+            <strong>Max Room Idle Time</strong>
+            <p style="font-size: 0.85em; color: #666;">Hours before empty rooms are deleted</p>
+        </div>
+        <select style="padding: 8px; border: 2px solid var(--dark-brown);">
+            <option>1 hour</option>
+            <option>6 hours</option>
+            <option selected>24 hours</option>
+            <option>48 hours</option>
+            <option>7 days</option>
+        </select>
+    </div>
+
+    <div class="setting-row">
+        <div>
+            <strong>Auto-delete Finished Games</strong>
+            <p style="font-size: 0.85em; color: #666;">Remove finished games after 30 days</p>
+        </div>
+        <div class="toggle {% if settings.auto_delete_finished %}active{% endif %}" onclick="this.classList.toggle('active')"></div>
+    </div>
+</div>
+
+<div class="setting-card">
+    <h3>Game Settings</h3>
+
+    <div class="setting-row">
+        <div>
+            <strong>Max Players per Room</strong>
+            <p style="font-size: 0.85em; color: #666;">Only 2 players allowed per game</p>
+        </div>
+        <span style="font-size: 1.2em; font-weight: bold;">2</span>
+    </div>
+
+    <div class="setting-row">
+        <div>
+            <strong>Show Leaderboard</strong>
+            <p style="font-size: 0.85em; color: #666;">Display top players on dashboard</p>
+        </div>
+        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+    </div>
+
+    <div class="setting-row">
+        <div>
+            <strong>Track Statistics</strong>
+            <p style="font-size: 0.85em; color: #666;">Save win/draw statistics per user</p>
+        </div>
+        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+    </div>
+</div>
+
+<div class="setting-card">
+    <h3>Maintenance</h3>
+
+    <div class="setting-row">
+        <div>
+            <strong>Database Size</strong>
+            <p style="font-size: 0.85em; color: #666;">Current database usage</p>
+        </div>
+        <span style="font-size: 1.2em; font-weight: bold;">~2.5 MB</span>
+    </div>
+
+    <div class="setting-row">
+        <div>
+            <strong>Export All Data</strong>
+            <p style="font-size: 0.85em; color: #666;">Download complete backup</p>
+        </div>
+        <button class="btn-turquoise">Export</button>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <button class="btn-pink" style="padding: 15px 40px;">Save Settings</button>
+</div>
+{% endblock %}

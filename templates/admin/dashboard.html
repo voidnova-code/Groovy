@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - GROOVY{% endblock %}
+
+{% block content %}
+<style>
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.stat-card {
+    background: var(--cream);
+    border: 3px solid var(--dark-brown);
+    padding: 20px;
+    text-align: center;
+}
+.stat-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.5em;
+    color: var(--pink);
+}
+.stat-label {
+    font-size: 0.9em;
+    text-transform: uppercase;
+    color: var(--dark-brown);
+}
+.stat-card.highlight {
+    background: var(--yellow);
+}
+.stat-card.highlight .stat-value {
+    color: var(--dark-brown);
+}
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+.admin-nav a {
+    padding: 12px 20px;
+    background: var(--turquoise);
+    color: white;
+    border: 3px solid var(--dark-brown);
+    text-decoration: none;
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+.admin-nav a:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--dark-brown);
+}
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.admin-table th, .admin-table td {
+    padding: 12px;
+    border: 2px solid var(--dark-brown);
+    text-align: left;
+}
+.admin-table th {
+    background: var(--yellow);
+    font-family: 'Fredoka One', cursive;
+}
+.admin-table tr:nth-child(even) {
+    background: var(--cream);
+}
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+.status-playing { background: var(--turquoise); color: white; padding: 3px 10px; }
+.status-waiting { background: var(--yellow); color: var(--dark-brown); padding: 3px 10px; }
+.status-finished { background: var(--pink); color: white; padding: 3px 10px; }
+</style>
+
+<div class="admin-header">
+    <h2>Admin Dashboard</h2>
+    <div>
+        <a href="/admin/export/users/" class="btn-pink" style="margin-right: 10px;">Export Users</a>
+        <a href="/admin/export/games/" class="btn-pink">Export Games</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card highlight">
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card highlight">
+        <div class="stat-value">{{ weekly_users }}</div>
+        <div class="stat-label">New This Week</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_games }}</div>
+        <div class="stat-label">Total Games</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ weekly_games }}</div>
+        <div class="stat-label">Games This Week</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ active_games }}</div>
+        <div class="stat-label">Active Now</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ finished_games }}</div>
+        <div class="stat-label">Finished</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ draws }}</div>
+        <div class="stat-label">Draws</div>
+    </div>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/users/">Manage Users</a>
+    <a href="/admin/games/">Manage Games</a>
+    <a href="/admin/user/create/">Create User</a>
+    <a href="/admin/feedbacks/">Feedbacks</a>
+    <a href="/admin/settings/">Settings</a>
+    <a href="/admin/logs/">Activity Logs</a>
+</div>
+
+<h3>Daily Games (Last 7 Days)</h3>
+<div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 25px;">
+    {% for day in daily_stats %}
+    <div style="text-align: center; padding: 15px; border: 3px solid var(--dark-brown); min-width: 80px;">
+        <div style="font-size: 1.5em; color: var(--pink);">{{ day.games }}</div>
+        <div style="font-size: 0.8em; color: var(--dark-brown);">{{ day.date }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<h3>Recent Games</h3>
+<table class="admin-table">
+    <tr>
+        <th>Code</th>
+        <th>Player X</th>
+        <th>Player O</th>
+        <th>Status</th>
+        <th>Winner</th>
+        <th>Created</th>
+    </tr>
+    {% for game in recent_games %}
+    <tr>
+        <td><a href="/admin/game/{{ game.id }}/" style="color: var(--pink);">{{ game.code }}</a></td>
+        <td>{{ game.player_x.username }}</td>
+        <td>{% if game.player_o %}{{ game.player_o.username }}{% else %}-{% endif %}</td>
+        <td>
+            {% if game.status == 'playing' %}<span class="status-playing">Playing</span>
+            {% elif game.status == 'waiting' %}<span class="status-waiting">Waiting</span>
+            {% else %}<span class="status-finished">Finished</span>{% endif %}
+        </td>
+        <td>{% if game.winner %}{{ game.winner.username }}{% else %}{% if game.is_draw %}Draw{% else %}-{% endif %}{% endif %}</td>
+        <td>{{ game.created_at|date:"M d, H:i" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Top Winners</h3>
+<table class="admin-table">
+    <tr>
+        <th>Username</th>
+        <th>Wins</th>
+    </tr>
+    {% for winner in top_winners %}
+    <tr>
+        <td>{{ winner.username }}</td>
+        <td>{{ winner.wins }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2">No winners yet!</td></tr>
+    {% endfor %}
+</table>
+
+<h3>Most Active Players</h3>
+<table class="admin-table">
+    <tr>
+        <th>Username</th>
+        <th>Games Played</th>
+    </tr>
+    {% for player in most_active %}
+    <tr>
+        <td>{{ player.username }}</td>
+        <td>{{ player.games_played }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2">No active players!</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

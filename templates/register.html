@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register - GROOVY{% endblock %}
+
+{% block content %}
+<h2>Register</h2>
+<div id="register-message" class="message"></div>
+
+<div class="form-group">
+    <label>Username</label>
+    <input type="text" id="register-username" placeholder="Pick a cool username">
+</div>
+
+<div class="form-group">
+    <label>Email</label>
+    <input type="email" id="register-email" placeholder="Enter email">
+</div>
+
+<div class="form-group">
+    <label>Password</label>
+    <input type="password" id="register-password" placeholder="Your secret code">
+</div>
+
+<button class="btn-turquoise" onclick="register()" style="width: 100%;">Register</button>
+
+<p class="switch-link">
+    Already have an account? <a href="{% url 'login' %}">Login</a>
+</p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function register() {
+    const username = document.getElementById('register-username').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+
+    if (!username || !password) {
+        showMessage('register-message', 'Hey! Fill in the blanks!', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(API_URL + 'auth/register/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            localStorage.setItem('access', data.tokens.access);
+            localStorage.setItem('refresh', data.tokens.refresh);
+            window.location.href = '{% url "dashboard" %}';
+        } else {
+            showMessage('register-message', Object.values(data).flat().join(', '), 'error');
+        }
+    } catch (err) {
+        showMessage('register-message', 'Whoops! The internet hiccupped. Try again!', 'error');
+    }
+}
+
+// Allow enter key to submit
+document.getElementById('register-password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') register();
+});
+document.getElementById('register-username').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') register();
+});
+</script>
+{% endblock %}

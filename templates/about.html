@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About - GROOVY{% endblock %}
+
+{% block content %}
+<h2>About</h2>
+
+<div style="background: var(--cream); border: 3px solid var(--dark-brown); padding: 25px; margin-bottom: 25px; transform: rotate(1deg);">
+    <span style="font-size: 4em; display: block; margin-bottom: 10px;">&#128187;</span>
+    <div style="font-family: 'Fredoka One', cursive; font-size: 1.5em; color: var(--pink); margin-bottom: 5px;">Voidnova</div>
+    <div style="color: var(--turquoise); font-size: 1em; margin-bottom: 15px;">The Wizard Behind the Magic</div>
+    <p style="color: var(--dark-brown); line-height: 1.6; font-size: 0.95em;">Greetings, mortal! I am Voidnova - a mysterious code wizard who emerged from the digital void to bring you this glorious Tic Tac Toe experience. Some say I'm just a lonely developer... but they don't know about the 3 AM coding sessions and the infinite snacks!</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px;">
+        <span style="background: var(--yellow); padding: 6px 12px; border: 2px solid var(--dark-brown); font-size: 0.85em; color: var(--dark-brown);">Python</span>
+        <span style="background: var(--yellow); padding: 6px 12px; border: 2px solid var(--dark-brown); font-size: 0.85em; color: var(--dark-brown);">Django</span>
+        <span style="background: var(--yellow); padding: 6px 12px; border: 2px solid var(--dark-brown); font-size: 0.85em; color: var(--dark-brown);">JavaScript</span>
+        <span style="background: var(--yellow); padding: 6px 12px; border: 2px solid var(--dark-brown); font-size: 0.85em; color: var(--dark-brown);">Magic</span>
+    </div>
+</div>
+
+<h2>Feedback</h2>
+<div id="feedback-form">
+    <p style="text-align: center; margin-bottom: 15px; color: var(--dark-brown);">Spill the tea! Or feedback... whichever you prefer!</p>
+
+    <div class="all-stars" id="star-rating" style="display: flex; justify-content: center; gap: 5px; margin-bottom: 20px;">
+        <span class="star" data-rating="1" onclick="setRating(1)" style="font-size: 1.8em; cursor: pointer; color: #ddd; transition: all 0.2s ease;">&#9733;</span>
+        <span class="star" data-rating="2" onclick="setRating(2)" style="font-size: 1.8em; cursor: pointer; color: #ddd; transition: all 0.2s ease;">&#9733;</span>
+        <span class="star" data-rating="3" onclick="setRating(3)" style="font-size: 1.8em; cursor: pointer; color: #ddd; transition: all 0.2s ease;">&#9733;</span>
+        <span class="star" data-rating="4" onclick="setRating(4)" style="font-size: 1.8em; cursor: pointer; color: #ddd; transition: all 0.2s ease;">&#9733;</span>
+        <span class="star" data-rating="5" onclick="setRating(5)" style="font-size: 1.8em; cursor: pointer; color: #ddd; transition: all 0.2s ease;">&#9733;</span>
+    </div>
+
+    <div class="form-group">
+        <label>Your Feedback</label>
+        <textarea id="feedback-text" placeholder="Tell us what you liked, what could be better..."></textarea>
+    </div>
+
+    <button class="btn-pink" onclick="submitFeedback()" style="width: 100%;">Submit Feedback</button>
+</div>
+
+<div id="feedback-submitted" style="display: none; text-align: center; padding: 20px; background: var(--cream); border: 3px solid var(--dark-brown);">
+    <div style="font-size: 2em; color: var(--pink); animation: bounce 0.6s ease-in-out infinite;">&#10084; You're epic!</div>
+    <p style="margin-top: 10px;">Your feedback means a lot!</p>
+</div>
+
+<div class="nav-links" style="margin-top: 20px;">
+    <a href="{% url 'dashboard' %}">Back to Game</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.star:hover, .star.active { color: var(--yellow); transform: scale(1.1); }
+.star.selected { color: var(--yellow); }
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRating = 0;
+
+function setRating(rating) {
+    currentRating = rating;
+    document.querySelectorAll('.star').forEach((star, index) => {
+        star.classList.toggle('selected', index < rating);
+    });
+}
+
+function submitFeedback() {
+    const feedback = document.getElementById('feedback-text').value;
+    if (!feedback.trim() && currentRating === 0) {
+        alert('C\'mon! Drop a star or some thoughts!');
+        return;
+    }
+
+    const feedbackData = {
+        rating: currentRating,
+        feedback: feedback,
+        username: currentUser ? currentUser.username : 'Anonymous',
+        date: new Date().toISOString()
+    };
+
+    const feedbacks = JSON.parse(localStorage.getItem('feedbacks')) || [];
+    feedbacks.push(feedbackData);
+    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+
+    document.getElementById('feedback-form').style.display = 'none';
+    document.getElementById('feedback-submitted').style.display = 'block';
+}
+</script>
+{% endblock %}
