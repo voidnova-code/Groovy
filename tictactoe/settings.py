@@ -135,11 +135,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Static files - use simple manifest storage
-STORAGES = {
-    "default": "django.core.files.storage.FileSystemStorage",
-    "staticfiles": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
-}
+# Static files - use Django's defaults
 
 
 # REST Framework settings

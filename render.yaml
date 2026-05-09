@@ -8,11 +8,9 @@ build {
 # If your app has a package.json with a build script, run that
 
 # Build command - install dependencies and run migrations
-# Build is run at /workspace, but you can change directory and run commands
 buildCommand = """
 pip install -r requirements.txt
 python manage.py migrate --noinput
-python manage.py collectstatic --noinput
 python manage.py create_superuser --username=admin --password=admin123
 """
 
