@@ -80,14 +80,16 @@ WSGI_APPLICATION = "tictactoe.wsgi.application"
 
 
 # Database - Support both SQLite (dev) and PostgreSQL (production)
-# If DATABASE_URL is set (by Render), use it; otherwise use SQLite
-DATABASE_URL = os.getenv("DATABASE_URL")
+# If DATABASE_URL is set (by Render or Azure), use it; otherwise use SQLite
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 if DATABASE_URL:
+    # For PostgreSQL, ensure SSL mode is set
+    if "postgresql" in DATABASE_URL:
+        if "sslmode=" not in DATABASE_URL:
+            DATABASE_URL = DATABASE_URL + "?sslmode=require"
     DATABASES = {
-       "default": dj_database_url.parse(
-            DATABASE_URL + "?sslmode=require"
-        )
+        "default": dj_database_url.parse(DATABASE_URL)
     }
 else:
     # Fallback to SQLite for local development

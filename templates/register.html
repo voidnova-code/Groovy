@@ -39,7 +39,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 async function register() {
     const username = document.getElementById('register-username').value;
@@ -71,73 +70,52 @@ async function register() {
     }
 }
 
-// Google Sign-Up Setup
-async function initGoogleSignUp() {
+// Google Sign-Up
+async function signupWithGoogle() {
     try {
+        // Get Google client config
         const configResponse = await fetch(API_URL + 'auth/google/config/');
         const configData = await configResponse.json();
         
-        if (!window.google) {
-            setTimeout(initGoogleSignUp, 500);
-            return;
-        }
+        // Build OAuth URL
+        const redirectUri = window.location.origin + '/auth/google/callback/';
+        const scope = 'openid profile email';
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${configData.client_id}&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `response_type=code&` +
+            `scope=${encodeURIComponent(scope)}`;
         
-        google.accounts.id.initialize({
-            client_id: configData.client_id,
-            callback: handleGoogleSignUp
-        });
+        // Redirect to Google OAuth
+        window.location.href = googleAuthUrl;
     } catch (err) {
-        console.error('Failed to initialize Google Sign-Up:', err);
+        showMessage('register-message', 'Failed to start Google sign-up', 'error');
     }
 }
 
-async function handleGoogleSignUp(response) {
-    if (response.credential) {
-        try {
-            const result = await fetch(API_URL + 'auth/google/callback/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    credential: response.credential,
-                    redirect_uri: window.location.origin + '{% url "register" %}'
-                })
-            });
-
-            const data = await result.json();
-            if (result.ok && data.access) {
-                localStorage.setItem('access', data.access);
-                if (data.refresh) localStorage.setItem('refresh', data.refresh);
-                window.location.href = '{% url "dashboard" %}';
-            } else {
-                showMessage('register-message', data.error || 'Google sign-up failed', 'error');
-            }
-        } catch (err) {
-            showMessage('register-message', 'Error during Google sign-up', 'error');
-        }
+// Wire up Google button click
+document.addEventListener('DOMContentLoaded', function() {
+    const googleBtn = document.getElementById('google-signup-btn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            signupWithGoogle();
+        });
     }
-}
-
-// Google Button Click Handler
-document.getElementById('google-signup-btn').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-        google.accounts.id.renderButton(
-            document.getElementById('google-signup-btn'),
-            { theme: 'outline', size: 'large', text: 'signup_with' }
-        );
-        google.accounts.id.prompt();
+    
+    // Allow enter key to submit
+    const passwordInput = document.getElementById('register-password');
+    const usernameInput = document.getElementById('register-username');
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
     }
-});
-
-// Initialize on page load
-window.addEventListener('load', initGoogleSignUp);
-
-// Allow enter key to submit
-document.getElementById('register-password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') register();
-});
-document.getElementById('register-username').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') register();
+    if (usernameInput) {
+        usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+    }
 });
 </script>
 {% endblock %}

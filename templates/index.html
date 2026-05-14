@@ -888,6 +888,16 @@
                     <input type="password" id="login-password" placeholder="Enter password">
                 </div>
                 <button class="btn-pink" onclick="login()" style="width: 100%;">Login</button>
+                
+                <!-- Google Sign-In Button -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="text-align: center; color: #666; margin-bottom: 10px; font-size: 14px;">Or login with</p>
+                    <button id="google-signin-btn" class="btn-turquoise" onclick="loginWithGoogle()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <img src="https://www.gstatic.com/firebaseapp/v8.10.1/images/firebaseui-icon-provider-google.svg" alt="Google" style="width: 20px; height: 20px;">
+                        Google
+                    </button>
+                </div>
+                
                 <p class="switch-link">Don't have an account? <a onclick="showRegister()">Register</a></p>
             </div>
 
@@ -907,6 +917,16 @@
                     <input type="password" id="register-password" placeholder="Your secret code">
                 </div>
                 <button class="btn-turquoise" onclick="register()" style="width: 100%;">Register</button>
+                
+                <!-- Google Sign-Up Button -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="text-align: center; color: #666; margin-bottom: 10px; font-size: 14px;">Or sign up with</p>
+                    <button id="google-signup-btn" class="btn-pink" onclick="signupWithGoogle()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <img src="https://www.gstatic.com/firebaseapp/v8.10.1/images/firebaseui-icon-provider-google.svg" alt="Google" style="width: 20px; height: 20px;">
+                        Google
+                    </button>
+                </div>
+                
                 <p class="switch-link">Already have an account? <a onclick="showLogin()">Login</a></p>
             </div>
         </div>
@@ -1218,6 +1238,50 @@
                 }
             } catch (err) {
                 showMessage('login-message', 'Whoops! The internet hiccupped. Try again!', 'error');
+            }
+        }
+
+        async function loginWithGoogle() {
+            try {
+                // Get Google client config
+                const configResponse = await fetch(API_URL + 'auth/google/config/');
+                const configData = await configResponse.json();
+                
+                // Build OAuth URL
+                const redirectUri = window.location.origin + '/auth/google/callback/';
+                const scope = 'openid profile email';
+                const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${configData.client_id}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=code&` +
+                    `scope=${encodeURIComponent(scope)}`;
+                
+                // Redirect to Google OAuth
+                window.location.href = googleAuthUrl;
+            } catch (err) {
+                showMessage('login-message', 'Failed to start Google login', 'error');
+            }
+        }
+
+        async function signupWithGoogle() {
+            try {
+                // Get Google client config
+                const configResponse = await fetch(API_URL + 'auth/google/config/');
+                const configData = await configResponse.json();
+                
+                // Build OAuth URL
+                const redirectUri = window.location.origin + '/auth/google/callback/';
+                const scope = 'openid profile email';
+                const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${configData.client_id}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=code&` +
+                    `scope=${encodeURIComponent(scope)}`;
+                
+                // Redirect to Google OAuth
+                window.location.href = googleAuthUrl;
+            } catch (err) {
+                showMessage('register-message', 'Failed to start Google sign-up', 'error');
             }
         }
 
