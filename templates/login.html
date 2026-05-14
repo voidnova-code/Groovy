@@ -19,12 +19,22 @@
 
 <button class="btn-pink" onclick="login()" style="width: 100%;">Login</button>
 
+<!-- Google Sign-In Button -->
+<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p style="text-align: center; color: #666; margin-bottom: 10px;">Or login with</p>
+    <button id="google-signin-btn" class="btn-turquoise" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <img src="https://www.gstatic.com/firebaseapp/v8.10.1/images/firebaseui-icon-provider-google.svg" alt="Google" style="width: 20px; height: 20px;">
+        Google
+    </button>
+</div>
+
 <p class="switch-link">
     Don't have an account? <a href="{% url 'register' %}">Register</a>
 </p>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 async function login() {
     const username = document.getElementById('login-username').value;
@@ -54,6 +64,67 @@ async function login() {
         showMessage('login-message', 'Whoops! The internet hiccupped. Try again!', 'error');
     }
 }
+
+// Google Sign-In Setup
+async function initGoogleSignIn() {
+    try {
+        const configResponse = await fetch(API_URL + 'auth/google/config/');
+        const configData = await configResponse.json();
+        
+        if (!window.google) {
+            setTimeout(initGoogleSignIn, 500);
+            return;
+        }
+        
+        google.accounts.id.initialize({
+            client_id: configData.client_id,
+            callback: handleGoogleSignIn
+        });
+    } catch (err) {
+        console.error('Failed to initialize Google Sign-In:', err);
+    }
+}
+
+async function handleGoogleSignIn(response) {
+    if (response.credential) {
+        try {
+            const result = await fetch(API_URL + 'auth/google/callback/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    credential: response.credential,
+                    redirect_uri: window.location.origin + '{% url "login" %}'
+                })
+            });
+
+            const data = await result.json();
+            if (result.ok && data.access) {
+                localStorage.setItem('access', data.access);
+                if (data.refresh) localStorage.setItem('refresh', data.refresh);
+                window.location.href = '{% url "dashboard" %}';
+            } else {
+                showMessage('login-message', data.error || 'Google login failed', 'error');
+            }
+        } catch (err) {
+            showMessage('login-message', 'Error during Google login', 'error');
+        }
+    }
+}
+
+// Google Button Click Handler
+document.getElementById('google-signin-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+        google.accounts.id.renderButton(
+            document.getElementById('google-signin-btn'),
+            { theme: 'outline', size: 'large', text: 'signin_with' }
+        );
+        google.accounts.id.prompt();
+    }
+});
+
+// Initialize on page load
+window.addEventListener('load', initGoogleSignIn);
 
 // Allow enter key to submit
 document.getElementById('login-password').addEventListener('keypress', function(e) {

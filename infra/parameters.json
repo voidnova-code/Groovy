@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "value": "tictactoe"
+    },
+    "environment": {
+      "value": "prod"
+    },
+    "appServiceSkuName": {
+      "value": "B2"
+    },
+    "appServiceSkuTier": {
+      "value": "Basic"
+    },
+    "postgresqlSkuName": {
+      "value": "Standard_B1ms"
+    },
+    "postgresqlVersion": {
+      "value": "14"
+    }
+  }
+}

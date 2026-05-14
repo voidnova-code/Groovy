@@ -24,12 +24,22 @@
 
 <button class="btn-turquoise" onclick="register()" style="width: 100%;">Register</button>
 
+<!-- Google Sign-Up Button -->
+<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p style="text-align: center; color: #666; margin-bottom: 10px;">Or sign up with</p>
+    <button id="google-signup-btn" class="btn-pink" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <img src="https://www.gstatic.com/firebaseapp/v8.10.1/images/firebaseui-icon-provider-google.svg" alt="Google" style="width: 20px; height: 20px;">
+        Google
+    </button>
+</div>
+
 <p class="switch-link">
     Already have an account? <a href="{% url 'login' %}">Login</a>
 </p>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 async function register() {
     const username = document.getElementById('register-username').value;
@@ -60,6 +70,67 @@ async function register() {
         showMessage('register-message', 'Whoops! The internet hiccupped. Try again!', 'error');
     }
 }
+
+// Google Sign-Up Setup
+async function initGoogleSignUp() {
+    try {
+        const configResponse = await fetch(API_URL + 'auth/google/config/');
+        const configData = await configResponse.json();
+        
+        if (!window.google) {
+            setTimeout(initGoogleSignUp, 500);
+            return;
+        }
+        
+        google.accounts.id.initialize({
+            client_id: configData.client_id,
+            callback: handleGoogleSignUp
+        });
+    } catch (err) {
+        console.error('Failed to initialize Google Sign-Up:', err);
+    }
+}
+
+async function handleGoogleSignUp(response) {
+    if (response.credential) {
+        try {
+            const result = await fetch(API_URL + 'auth/google/callback/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    credential: response.credential,
+                    redirect_uri: window.location.origin + '{% url "register" %}'
+                })
+            });
+
+            const data = await result.json();
+            if (result.ok && data.access) {
+                localStorage.setItem('access', data.access);
+                if (data.refresh) localStorage.setItem('refresh', data.refresh);
+                window.location.href = '{% url "dashboard" %}';
+            } else {
+                showMessage('register-message', data.error || 'Google sign-up failed', 'error');
+            }
+        } catch (err) {
+            showMessage('register-message', 'Error during Google sign-up', 'error');
+        }
+    }
+}
+
+// Google Button Click Handler
+document.getElementById('google-signup-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+        google.accounts.id.renderButton(
+            document.getElementById('google-signup-btn'),
+            { theme: 'outline', size: 'large', text: 'signup_with' }
+        );
+        google.accounts.id.prompt();
+    }
+});
+
+// Initialize on page load
+window.addEventListener('load', initGoogleSignUp);
 
 // Allow enter key to submit
 document.getElementById('register-password').addEventListener('keypress', function(e) {
