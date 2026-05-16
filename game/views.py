@@ -388,7 +388,7 @@ class GameRoomViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"], url_path="rematch/request")
     def request_rematch(self, request):
-        """Request a rematch - only the creator can request"""
+        """Request a rematch - loser can request"""
         serializer = JoinRoomSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -403,16 +403,23 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Only the creator (player_x) can request rematch
-        if request.user != room.player_x:
-            return Response(
-                {"error": "Only the room creator can request a rematch!"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
+        # Only loser or draw participant can request rematch, not winner
         if room.status != "finished":
             return Response(
                 {"error": "Game is not finished yet!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not room.is_draw and request.user == room.winner:
+            return Response(
+                {"error": "Winners don't request rematches!"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check if already has a pending rematch request
+        if room.rematch_requested:
+            return Response(
+                {"error": "Rematch already requested!"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -439,10 +446,10 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Only player_o can accept
-        if request.user != room.player_o:
+        # Only the opponent (non-requester) can accept
+        if request.user == room.rematch_requested_by:
             return Response(
-                {"error": "Only the opponent can accept the rematch!"},
+                {"error": "You can't accept your own rematch request!"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -481,10 +488,10 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Only player_o can decline
-        if request.user != room.player_o:
+        # Only the opponent (non-requester) can decline
+        if request.user == room.rematch_requested_by:
             return Response(
-                {"error": "Only the opponent can decline the rematch!"},
+                {"error": "You can't decline your own rematch request!"},
                 status=status.HTTP_403_FORBIDDEN
             )
 

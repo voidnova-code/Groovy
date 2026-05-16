@@ -1212,6 +1212,7 @@
                 if (response.ok) {
                     localStorage.setItem('access', data.tokens.access);
                     localStorage.setItem('refresh', data.tokens.refresh);
+                    accessToken = data.tokens.access;
                     currentUser = data.user;
                     showDashboard();
                 } else {
@@ -1242,6 +1243,7 @@
                 if (response.ok) {
                     localStorage.setItem('access', data.tokens.access);
                     localStorage.setItem('refresh', data.tokens.refresh);
+                    accessToken = data.tokens.access;
                     currentUser = data.user;
                     showDashboard();
                 } else {
@@ -1777,6 +1779,8 @@
                     document.getElementById('modal').classList.remove('active');
                     document.getElementById('turn-indicator').textContent = 'Waiting for opponent...';
                     document.getElementById('turn-indicator').className = 'turn-indicator waiting';
+                    await loadGameState(currentRoomCode);
+                    startPolling();
                 } else {
                     const data = await response.json();
                     alert(data.error || 'Couldn\'t send rematch request!');
@@ -1836,19 +1840,9 @@
 
         // Check for rematch request and show modal to WINNER
         function checkRematchRequest(data) {
-            const isPlayerO = currentUser.id === data.player_o;
-            const isPlayerX = currentUser.id === data.player_x;
-
             if (data.rematch_requested && data.status === 'finished') {
                 // Show rematch modal to the opponent (the one who didn't request)
-                const loserIsPlayerX = data.rematch_requested_by === data.player_x;
-
-                if (loserIsPlayerX && isPlayerO) {
-                    // Loser (X) requested, winner (O) sees accept/decline
-                    document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants to play again!';
-                    document.getElementById('rematch-modal').classList.add('active');
-                } else if (!loserIsPlayerX && isPlayerX) {
-                    // Loser (O) requested, winner (X) sees accept/decline
+                if (currentUser.id !== data.rematch_requested_by) {
                     document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants to play again!';
                     document.getElementById('rematch-modal').classList.add('active');
                 }

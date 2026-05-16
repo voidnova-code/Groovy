@@ -294,7 +294,9 @@ async function requestRematch() {
             body: JSON.stringify({ room_code: currentRoomCode })
         });
         if (response.ok) {
+            gameFinished = false;
             await loadGameState();
+            startPolling();
         } else {
             alert('Failed to request rematch');
         }
