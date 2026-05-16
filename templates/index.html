@@ -1517,15 +1517,20 @@
             document.getElementById('modal-message').textContent = isDraw ? 'Well, that was TENSE!' : (isWin ? 'You absolute legend!' : 'Better luck next time, champ!');
             document.getElementById('modal').classList.add('active');
 
-            // Add rematch button for game creator (player_x)
-            const isCreator = currentUser.id === currentRoomData.player_x;
-            if (isCreator) {
-                // Replace Back button with Request Rematch button
-                const btnContainer = document.querySelector('#modal .btn-turquoise').parentElement;
-                const btnRow = btnContainer.querySelector('.btn-row') || document.createElement('div');
+            // Only show "Play Again" button for loser (not winner)
+            const btnContainer = document.querySelector('#modal .btn-turquoise').parentElement;
+            const btnRow = btnContainer.querySelector('.btn-row') || document.createElement('div');
+
+            if (isDraw || !isWin) {
+                // Draw or loser: show "Play Again" button
                 btnRow.innerHTML = `
-                    <button class="btn-turquoise" onclick="closeModalAndRematch()" style="width: 100%;">Request Rematch</button>
+                    <button class="btn-turquoise" onclick="closeModalAndRematch()" style="width: 100%;">PLAY AGAIN</button>
                     <button class="btn-white" onclick="modalBackToDashboard()" style="width: 100%; margin-top: 10px;">Back to Dashboard</button>
+                `;
+            } else {
+                // Winner: just show back button
+                btnRow.innerHTML = `
+                    <button class="btn-white" onclick="modalBackToDashboard()" style="width: 100%;">Back to Dashboard</button>
                 `;
             }
         }
@@ -1829,14 +1834,24 @@
             }
         }
 
-        // Check for rematch request and show modal
+        // Check for rematch request and show modal to WINNER
         function checkRematchRequest(data) {
             const isPlayerO = currentUser.id === data.player_o;
-            if (data.rematch_requested && isPlayerO && data.status === 'finished') {
-                document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants a rematch!';
-                document.getElementById('rematch-modal').classList.add('active');
-            } else if (data.rematch_requested && !isPlayerO && data.status === 'finished') {
-                document.getElementById('turn-indicator').textContent = 'Waiting for opponent to accept...';
+            const isPlayerX = currentUser.id === data.player_x;
+
+            if (data.rematch_requested && data.status === 'finished') {
+                // Show rematch modal to the opponent (the one who didn't request)
+                const loserIsPlayerX = data.rematch_requested_by === data.player_x;
+
+                if (loserIsPlayerX && isPlayerO) {
+                    // Loser (X) requested, winner (O) sees accept/decline
+                    document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants to play again!';
+                    document.getElementById('rematch-modal').classList.add('active');
+                } else if (!loserIsPlayerX && isPlayerX) {
+                    // Loser (O) requested, winner (X) sees accept/decline
+                    document.getElementById('rematch-message').textContent = data.rematch_requested_by_username + ' wants to play again!';
+                    document.getElementById('rematch-modal').classList.add('active');
+                }
             }
         }
 
