@@ -176,6 +176,7 @@ function updateGameUI(data) {
 
     if (data.status === 'finished') {
         turnDiv.style.animation = 'none';
+        stopPolling();
         if (!gameFinished) {
             gameFinished = true;
             if (data.is_draw) {
@@ -255,7 +256,7 @@ function stopPolling() {
 
 function showRematchUI(data) {
     hideRematchUI();
-    const isCreator = currentUser.id === data.player_x;
+    const isCreator = currentUser && currentUser.id === data.player_x;
 
     if (data.rematch_requested) {
         if (isCreator) {
