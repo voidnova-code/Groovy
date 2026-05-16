@@ -1459,6 +1459,8 @@
 
             if (data.status === 'finished') {
                 turnDiv.classList.add('finished');
+                stopPolling();
+                checkRematchRequest(data);
                 if (data.is_draw) {
                     turnDiv.textContent = "It's a Draw!";
                     turnDiv.classList.add('waiting');
