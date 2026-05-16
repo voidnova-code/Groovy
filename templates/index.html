@@ -1769,6 +1769,7 @@
                 });
 
                 if (response.ok) {
+                    document.getElementById('modal').classList.remove('active');
                     document.getElementById('turn-indicator').textContent = 'Waiting for opponent...';
                     document.getElementById('turn-indicator').className = 'turn-indicator waiting';
                 } else {
@@ -1795,8 +1796,11 @@
 
                 if (response.ok) {
                     document.getElementById('rematch-modal').classList.remove('active');
+                    document.getElementById('modal').classList.remove('active');
+                    gameFinished = false;
                     const data = await response.json();
                     updateGameUI(data);
+                    startPolling();
                 } else {
                     const data = await response.json();
                     alert(data.error || 'Couldn\'t accept rematch!');
