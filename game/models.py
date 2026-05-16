@@ -29,10 +29,6 @@ class GameRoom(models.Model):
     is_draw = models.BooleanField(default=False)
     current_turn = models.CharField(max_length=1, default="X")
     board_state = models.JSONField(default=default_board_state)
-    rematch_requested = models.BooleanField(default=False)
-    rematch_requested_by = models.ForeignKey(
-        User, on_delete=models.CASCADE, null=True, blank=True, related_name="rematch_requested"
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
