@@ -12,6 +12,11 @@ def spa_index(request):
     return render(request, "index.html")
 
 
+def google_callback(request):
+    """Handle Google OAuth callback"""
+    return render(request, "callback.html")
+
+
 def admin_index(request):
     """Route /admin/ to the custom admin experience."""
     if request.user.is_authenticated and request.user.is_superuser:
@@ -49,6 +54,9 @@ urlpatterns = [
     # Handle login redirect
     path("accounts/login/", admin_login, name="login"),
     path("accounts/logout/", auth_views.LogoutView.as_view(next_page="/"), name="logout"),
+
+    # Google OAuth callback
+    path("auth/google/callback/", google_callback, name="google_callback"),
 
     # Admin login
     path("admin/login/", admin_login, name="admin_login"),

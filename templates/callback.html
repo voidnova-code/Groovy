@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Google Sign-In - GROOVY{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 40px;">
+    <h2>Signing you in...</h2>
+    <p>Please wait while we authenticate with Google</p>
+    <div class="spinner" style="margin-top: 20px;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get the authorization code from URL
+const urlParams = new URLSearchParams(window.location.search);
+const code = urlParams.get('code');
+const error = urlParams.get('error');
+
+async function handleGoogleCallback() {
+    if (error) {
+        alert('Google login failed: ' + error);
+        window.location.href = '/';
+        return;
+    }
+
+    if (!code) {
+        alert('No authorization code received');
+        window.location.href = '/';
+        return;
+    }
+
+    try {
+        // Exchange auth code for tokens
+        const response = await fetch(API_URL + 'auth/google/callback/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                auth_code: code,
+                redirect_uri: window.location.origin + '/auth/google/callback/'
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.tokens) {
+            // Store tokens
+            localStorage.setItem('access', data.tokens.access);
+            localStorage.setItem('refresh', data.tokens.refresh);
+            // Redirect to dashboard
+            window.location.href = '{% url "dashboard" %}';
+        } else {
+            alert(data.error || 'Authentication failed');
+            window.location.href = '/';
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        alert('An error occurred during sign-in');
+        window.location.href = '/';
+    }
+}
+
+// Handle callback on page load
+window.addEventListener('load', handleGoogleCallback);
+</script>
+
+<style>
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--turquoise);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
