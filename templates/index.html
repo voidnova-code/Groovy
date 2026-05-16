@@ -1139,6 +1139,7 @@
         let currentRoomCode = null;
         let currentRoomData = null;
         let pollInterval = null;
+        let gameFinished = false;
         let scores = JSON.parse(localStorage.getItem('ttt_scores')) || { x: 0, o: 0, draw: 0 };
         let selectedDonation = 0;
         let currentRating = 0;
@@ -1461,35 +1462,40 @@
                 turnDiv.classList.add('finished');
                 stopPolling();
                 checkRematchRequest(data);
-                if (data.is_draw) {
-                    turnDiv.textContent = "It's a Draw!";
-                    turnDiv.classList.add('waiting');
-                    scores.draw++;
-                    document.getElementById('score-draw').textContent = scores.draw;
-                } else {
-                    const isWinner = data.winner === currentUser.id;
-                    const winnerSymbol = data.winner === data.player_x ? 'X' : 'O';
-                    turnDiv.textContent = isWinner ? 'You Win!' : `${winnerSymbol} Wins!`;
-                    turnDiv.classList.add(winnerSymbol === 'X' ? 'x-turn' : 'o-turn');
+                if (!gameFinished) {
+                    gameFinished = true;
+                    if (data.is_draw) {
+                        turnDiv.textContent = "It's a Draw!";
+                        turnDiv.classList.add('waiting');
+                        scores.draw++;
+                        document.getElementById('score-draw').textContent = scores.draw;
+                    } else {
+                        const isWinner = data.winner === currentUser.id;
+                        const winnerSymbol = data.winner === data.player_x ? 'X' : 'O';
+                        turnDiv.textContent = isWinner ? 'You Win!' : `${winnerSymbol} Wins!`;
+                        turnDiv.classList.add(winnerSymbol === 'X' ? 'x-turn' : 'o-turn');
 
-                    if (isWinner) {
-                        if (isPlayerX) { scores.x++; document.getElementById('score-x').textContent = scores.x; }
-                        else { scores.o++; document.getElementById('score-o').textContent = scores.o; }
+                        if (isWinner) {
+                            if (isPlayerX) { scores.x++; document.getElementById('score-x').textContent = scores.x; }
+                            else { scores.o++; document.getElementById('score-o').textContent = scores.o; }
+                        }
+                        localStorage.setItem('ttt_scores', JSON.stringify(scores));
+
+                        const winningCombo = checkWinner(data.board_state);
+                        if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
+
+                        setTimeout(() => {
+                            showModal(data.winner === currentUser.id ? 'You Win!' : data.is_draw ? "It's a Draw!" : `${data.winner === data.player_x ? 'X' : 'O'} Wins!`,
+                                data.is_draw, isWinner);
+                        }, 500);
                     }
-                    localStorage.setItem('ttt_scores', JSON.stringify(scores));
-
-                    const winningCombo = checkWinner(data.board_state);
-                    if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
-
-                    setTimeout(() => {
-                        showModal(data.winner === currentUser.id ? 'You Win!' : data.is_draw ? "It's a Draw!" : `${data.winner === data.player_x ? 'X' : 'O'} Wins!`,
-                            data.is_draw, isWinner);
-                    }, 500);
                 }
             } else if (data.status === 'playing') {
+                gameFinished = false;
                 turnDiv.textContent = isMyTurn ? "Your Turn!" : "Opponent's Turn";
                 turnDiv.classList.add(data.current_turn === 'X' ? 'x-turn' : 'o-turn');
             } else {
+                gameFinished = false;
                 turnDiv.textContent = 'Waiting for opponent...';
                 turnDiv.classList.add('waiting');
             }
