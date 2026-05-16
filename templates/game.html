@@ -35,6 +35,26 @@
 
 <div id="turn-indicator" class="turn-indicator" style="text-align: center; padding: 15px; font-size: 1.4em; font-family: 'Fredoka One', cursive; margin-bottom: 20px; border: 3px solid var(--dark-brown); animation: pulse 1.5s ease-in-out infinite; background: var(--yellow); color: var(--dark-brown);"></div>
 
+<div id="rematch-section" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--cream); border: 3px solid var(--dark-brown);">
+    <p style="font-family: 'Fredoka One', cursive; font-size: 1.1em; margin-bottom: 10px;">Play Again?</p>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn-pink" onclick="requestRematch()" style="flex: 1;">Request Rematch</button>
+        <button class="btn-white" onclick="window.location.href='{% url 'dashboard' %}'" style="flex: 1;">Back to Dashboard</button>
+    </div>
+</div>
+
+<div id="rematch-pending" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--yellow); border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive;">
+    <p style="margin: 0; font-size: 1.1em;">Waiting for opponent to accept rematch...</p>
+</div>
+
+<div id="rematch-request" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--turquoise); border: 3px solid var(--dark-brown); color: white; font-family: 'Fredoka One', cursive;">
+    <p style="margin-bottom: 10px; font-size: 1.1em;">Your opponent wants a rematch!</p>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn-pink" onclick="acceptRematch()" style="flex: 1;">Accept</button>
+        <button class="btn-white" onclick="declineRematch()" style="flex: 1;">Decline</button>
+    </div>
+</div>
+
 <div class="game-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--yellow); border: 3px solid var(--dark-brown); transform: rotate(0.5deg); margin-bottom: 20px;">
     <div class="cell" data-index="0" onclick="makeMove(0)"></div>
     <div class="cell" data-index="1" onclick="makeMove(1)"></div>
@@ -99,6 +119,8 @@
 let scores = JSON.parse(localStorage.getItem('ttt_scores')) || { x: 0, o: 0, draw: 0 };
 let currentRoomCode = new URLSearchParams(window.location.search).get('code');
 let pollInterval = null;
+let lastGameStatus = null;
+let gameFinished = false;
 
 document.getElementById('score-x').textContent = scores.x;
 document.getElementById('score-o').textContent = scores.o;
@@ -154,32 +176,40 @@ function updateGameUI(data) {
 
     if (data.status === 'finished') {
         turnDiv.style.animation = 'none';
-        if (data.is_draw) {
-            turnDiv.textContent = "Well, that was TENSE!";
-            turnDiv.style.background = 'var(--yellow)';
-            turnDiv.style.color = 'var(--dark-brown)';
-            scores.draw++;
-            document.getElementById('score-draw').textContent = scores.draw;
-        } else {
-            const isWinner = data.winner === currentUser.id;
-            const winnerSymbol = data.winner === data.player_x ? 'X' : 'O';
-            turnDiv.textContent = isWinner ? 'You absolute legend!' : 'Better luck next time, champ!';
-            turnDiv.classList.add(winnerSymbol === 'X' ? 'x-turn' : 'o-turn');
-            if (isWinner) {
-                if (isPlayerX) { scores.x++; document.getElementById('score-x').textContent = scores.x; }
-                else { scores.o++; document.getElementById('score-o').textContent = scores.o; }
+        if (!gameFinished) {
+            gameFinished = true;
+            if (data.is_draw) {
+                turnDiv.textContent = "Well, that was TENSE!";
+                turnDiv.style.background = 'var(--yellow)';
+                turnDiv.style.color = 'var(--dark-brown)';
+                scores.draw++;
+                document.getElementById('score-draw').textContent = scores.draw;
+            } else {
+                const isWinner = data.winner === currentUser.id;
+                const winnerSymbol = data.winner === data.player_x ? 'X' : 'O';
+                turnDiv.textContent = isWinner ? 'You absolute legend!' : 'Better luck next time, champ!';
+                turnDiv.classList.add(winnerSymbol === 'X' ? 'x-turn' : 'o-turn');
+                if (isWinner) {
+                    if (isPlayerX) { scores.x++; document.getElementById('score-x').textContent = scores.x; }
+                    else { scores.o++; document.getElementById('score-o').textContent = scores.o; }
+                }
+                const winningCombo = checkWinner(data.board_state);
+                if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
             }
             localStorage.setItem('ttt_scores', JSON.stringify(scores));
-            const winningCombo = checkWinner(data.board_state);
-            if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
         }
+        showRematchUI(data);
     } else if (data.status === 'playing') {
+        gameFinished = false;
         turnDiv.textContent = isMyTurn ? "Your Turn!" : "Opponent's Turn";
         turnDiv.classList.add(data.current_turn === 'X' ? 'x-turn' : 'o-turn');
+        hideRematchUI();
     } else {
+        gameFinished = false;
         turnDiv.textContent = 'Waiting for opponent...';
         turnDiv.style.background = 'var(--yellow)';
         turnDiv.style.color = 'var(--dark-brown)';
+        hideRematchUI();
     }
 }
 
@@ -221,6 +251,89 @@ function startPolling() {
 
 function stopPolling() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+function showRematchUI(data) {
+    hideRematchUI();
+    const isCreator = currentUser.id === data.player_x;
+
+    if (data.rematch_requested) {
+        if (isCreator) {
+            document.getElementById('rematch-pending').style.display = 'block';
+        } else {
+            document.getElementById('rematch-request').style.display = 'block';
+        }
+    } else {
+        document.getElementById('rematch-section').style.display = 'block';
+    }
+}
+
+function hideRematchUI() {
+    document.getElementById('rematch-section').style.display = 'none';
+    document.getElementById('rematch-pending').style.display = 'none';
+    document.getElementById('rematch-request').style.display = 'none';
+}
+
+async function requestRematch() {
+    try {
+        const response = await fetch(API_URL + 'rooms/rematch/request/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ room_code: currentRoomCode })
+        });
+        if (response.ok) {
+            await loadGameState();
+        } else {
+            alert('Failed to request rematch');
+        }
+    } catch (err) {
+        alert('Error requesting rematch');
+    }
+}
+
+async function acceptRematch() {
+    try {
+        const response = await fetch(API_URL + 'rooms/rematch/accept/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ room_code: currentRoomCode })
+        });
+        if (response.ok) {
+            gameFinished = false;
+            await loadGameState();
+            startPolling();
+        } else {
+            alert('Failed to accept rematch');
+        }
+    } catch (err) {
+        alert('Error accepting rematch');
+    }
+}
+
+async function declineRematch() {
+    try {
+        const response = await fetch(API_URL + 'rooms/rematch/decline/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ room_code: currentRoomCode })
+        });
+        if (response.ok) {
+            await loadGameState();
+        } else {
+            alert('Failed to decline rematch');
+        }
+    } catch (err) {
+        alert('Error declining rematch');
+    }
 }
 
 init();
