@@ -153,6 +153,7 @@ async function loadGameState() {
 }
 
 function updateGameUI(data) {
+    console.log('updateGameUI called, status:', data.status, 'gameFinished:', gameFinished);
     document.getElementById('player-x-name').textContent = data.player_x_username;
     document.getElementById('player-o-name').textContent = data.player_o_username || 'Waiting...';
 
@@ -175,6 +176,7 @@ function updateGameUI(data) {
     turnDiv.style.animation = 'pulse 1.5s ease-in-out infinite';
 
     if (data.status === 'finished') {
+        console.log('Game finished!');
         turnDiv.style.animation = 'none';
         stopPolling();
         if (!gameFinished) {
@@ -255,16 +257,22 @@ function stopPolling() {
 }
 
 function showRematchUI(data) {
+    console.log('showRematchUI called with data:', data);
     hideRematchUI();
     const isCreator = currentUser && currentUser.id === data.player_x;
+    console.log('isCreator:', isCreator, 'rematch_requested:', data.rematch_requested);
 
     if (data.rematch_requested) {
+        console.log('Showing rematch request UI');
         if (isCreator) {
+            console.log('Showing rematch pending (waiting for opponent)');
             document.getElementById('rematch-pending').style.display = 'block';
         } else {
+            console.log('Showing rematch request (ask to accept/decline)');
             document.getElementById('rematch-request').style.display = 'block';
         }
     } else {
+        console.log('Showing rematch section (play again button)');
         document.getElementById('rematch-section').style.display = 'block';
     }
 }
