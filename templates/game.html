@@ -259,19 +259,20 @@ function stopPolling() {
 function showRematchUI(data) {
     console.log('showRematchUI called with data:', data);
     hideRematchUI();
-    const isCreator = currentUser && currentUser.id === data.player_x;
-    console.log('isCreator:', isCreator, 'rematch_requested:', data.rematch_requested);
+    const isRequester = currentUser && currentUser.id === data.rematch_requested_by;
+    const isWinner = data.winner === currentUser.id;
+    console.log('isRequester:', isRequester, 'isWinner:', isWinner, 'rematch_requested:', data.rematch_requested);
 
     if (data.rematch_requested) {
         console.log('Showing rematch request UI');
-        if (isCreator) {
+        if (isRequester) {
             console.log('Showing rematch pending (waiting for opponent)');
             document.getElementById('rematch-pending').style.display = 'block';
         } else {
             console.log('Showing rematch request (ask to accept/decline)');
             document.getElementById('rematch-request').style.display = 'block';
         }
-    } else {
+    } else if (!isWinner || data.is_draw) {
         console.log('Showing rematch section (play again button)');
         document.getElementById('rematch-section').style.display = 'block';
     }
