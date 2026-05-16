@@ -133,7 +133,6 @@ async function loadGameState() {
 }
 
 function updateGameUI(data) {
-    console.log('updateGameUI called, status:', data.status, 'gameFinished:', gameFinished);
     document.getElementById('player-x-name').textContent = data.player_x_username;
     document.getElementById('player-o-name').textContent = data.player_o_username || 'Waiting...';
 
@@ -156,7 +155,6 @@ function updateGameUI(data) {
     turnDiv.style.animation = 'pulse 1.5s ease-in-out infinite';
 
     if (data.status === 'finished') {
-        console.log('Game finished!');
         turnDiv.style.animation = 'none';
         stopPolling();
         if (!gameFinished) {
@@ -235,101 +233,6 @@ function startPolling() {
 
 function stopPolling() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-}
-
-function showRematchUI(data) {
-    console.log('showRematchUI called with data:', data);
-    hideRematchUI();
-    const isRequester = currentUser && data.rematch_requested_by && currentUser.id === data.rematch_requested_by;
-    const isWinner = data.winner && data.winner === currentUser.id;
-    console.log('User ID:', currentUser?.id, 'Requester ID:', data.rematch_requested_by, 'Winner ID:', data.winner);
-    console.log('isRequester:', isRequester, 'isWinner:', isWinner, 'rematch_requested:', data.rematch_requested);
-
-    if (data.rematch_requested) {
-        console.log('Showing rematch request UI');
-        if (isRequester) {
-            console.log('Showing rematch pending (waiting for opponent)');
-            document.getElementById('rematch-pending').style.display = 'block';
-        } else {
-            console.log('Showing rematch request (ask to accept/decline)');
-            document.getElementById('rematch-request').style.display = 'block';
-        }
-    } else if (!isWinner || data.is_draw) {
-        console.log('Showing rematch section (play again button)');
-        document.getElementById('rematch-section').style.display = 'block';
-    } else {
-        console.log('No rematch UI shown - user is winner and not a draw');
-    }
-}
-
-function hideRematchUI() {
-    document.getElementById('rematch-section').style.display = 'none';
-    document.getElementById('rematch-pending').style.display = 'none';
-    document.getElementById('rematch-request').style.display = 'none';
-}
-
-async function requestRematch() {
-    try {
-        const response = await fetch(API_URL + 'rooms/rematch/request/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            body: JSON.stringify({ room_code: currentRoomCode })
-        });
-        if (response.ok) {
-            gameFinished = false;
-            await loadGameState();
-            startPolling();
-        } else {
-            alert('Failed to request rematch');
-        }
-    } catch (err) {
-        alert('Error requesting rematch');
-    }
-}
-
-async function acceptRematch() {
-    try {
-        const response = await fetch(API_URL + 'rooms/rematch/accept/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            body: JSON.stringify({ room_code: currentRoomCode })
-        });
-        if (response.ok) {
-            gameFinished = false;
-            await loadGameState();
-            startPolling();
-        } else {
-            alert('Failed to accept rematch');
-        }
-    } catch (err) {
-        alert('Error accepting rematch');
-    }
-}
-
-async function declineRematch() {
-    try {
-        const response = await fetch(API_URL + 'rooms/rematch/decline/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            body: JSON.stringify({ room_code: currentRoomCode })
-        });
-        if (response.ok) {
-            await loadGameState();
-        } else {
-            alert('Failed to decline rematch');
-        }
-    } catch (err) {
-        alert('Error declining rematch');
-    }
 }
 
 async function autoResetGame() {
