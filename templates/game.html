@@ -216,7 +216,7 @@ async function makeMove(position) {
 
 function startPolling() {
     stopPolling();
-    pollInterval = setInterval(loadGameState, 2000);
+    pollInterval = setInterval(loadGameState, 8000);
 }
 
 function stopPolling() {

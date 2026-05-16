@@ -1,1 +1,1 @@
-web: gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=2 --bind=0.0.0.0:$PORT
+web: gunicorn tictactoe.wsgi:application --worker-class=gthread --workers=4 --bind=0.0.0.0:$PORT --worker-tmp-dir=/dev/shm --max-requests=1000 --timeout=30 --keep-alive=2

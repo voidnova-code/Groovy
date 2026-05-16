@@ -1564,7 +1564,7 @@
             stopPolling();
             pollInterval = setInterval(async () => {
                 if (currentRoomCode) await loadGameState(currentRoomCode);
-            }, 2000);
+            }, 8000);
         }
 
         function stopPolling() {
@@ -1587,7 +1587,7 @@
                         showGame(code);
                     }
                 }
-            }, 2000);
+            }, 8000);
         }
 
         function stopWaitingPoll() {

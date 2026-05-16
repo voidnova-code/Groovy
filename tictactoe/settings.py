@@ -100,6 +100,36 @@ else:
         }
     }
 
+# Connection pooling - reuse connections instead of creating new ones
+DATABASES["default"]["CONN_MAX_AGE"] = 600
+
+
+# Cache Configuration - Use Redis for production, local memory for development
+REDIS_URL = os.getenv("REDIS_URL", "")
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+                "IGNORE_EXCEPTIONS": True,
+            }
+        }
+    }
+else:
+    # Fallback to local memory cache for development
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

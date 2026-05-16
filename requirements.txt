@@ -18,6 +18,10 @@ python-dotenv>=1.0.0
 # Static files compression
 whitenoise>=6.5.0
 
+# Caching
+django-redis>=5.4.0
+redis>=5.0.0
+
 # Password hashing (for Argon2 passwords)
 argon2-cffi>=23.1.0
 

@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.core.cache import cache
 import os
 
 from .models import GameRoom, GameMove
@@ -204,9 +207,9 @@ class GameRoomViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return GameRoom.objects.filter(
+        return GameRoom.objects.select_related('player_x', 'player_o', 'winner').filter(
             player_x=self.request.user
-        ) | GameRoom.objects.filter(player_o=self.request.user)
+        ) | GameRoom.objects.select_related('player_x', 'player_o', 'winner').filter(player_o=self.request.user)
 
     def create(self, request):
         existing_waiting = GameRoom.objects.filter(
@@ -233,9 +236,9 @@ class GameRoomViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def my_games(self, request):
-        games = GameRoom.objects.filter(
+        games = GameRoom.objects.select_related('player_x', 'player_o', 'winner').filter(
             player_x=request.user
-        ) | GameRoom.objects.filter(player_o=request.user)
+        ) | GameRoom.objects.select_related('player_x', 'player_o', 'winner').filter(player_o=request.user)
         games = games.order_by("-updated_at")
         serializer = GameRoomSerializer(games, many=True)
         return Response(serializer.data)
@@ -295,7 +298,7 @@ class GameRoomViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            room = GameRoom.objects.get(code=room_code)
+            room = GameRoom.objects.select_related('player_x', 'player_o', 'winner').get(code=room_code)
         except GameRoom.DoesNotExist:
             return Response(
                 {"error": "Room not found"},
@@ -352,6 +355,7 @@ class GameRoomViewSet(viewsets.ModelViewSet):
             move_number=move_count
         )
 
+        cache.delete(f'game_room_{room_code}')
         return Response(GameRoomSerializer(room).data)
 
     @action(detail=False, methods=["delete"], url_path="delete")
