@@ -259,8 +259,10 @@ function stopPolling() {
 function showRematchUI(data) {
     console.log('showRematchUI called with data:', data);
     hideRematchUI();
-    const isRequester = currentUser && currentUser.id === data.rematch_requested_by;
-    const isWinner = data.winner === currentUser.id;
+
+    const isRequester = currentUser && data.rematch_requested_by && currentUser.id === data.rematch_requested_by;
+    const isWinner = data.winner && data.winner === currentUser.id;
+    console.log('User ID:', currentUser?.id, 'Requester ID:', data.rematch_requested_by, 'Winner ID:', data.winner);
     console.log('isRequester:', isRequester, 'isWinner:', isWinner, 'rematch_requested:', data.rematch_requested);
 
     if (data.rematch_requested) {
@@ -275,6 +277,8 @@ function showRematchUI(data) {
     } else if (!isWinner || data.is_draw) {
         console.log('Showing rematch section (play again button)');
         document.getElementById('rematch-section').style.display = 'block';
+    } else {
+        console.log('No rematch UI shown - user is winner and not a draw');
     }
 }
 
