@@ -35,26 +35,6 @@
 
 <div id="turn-indicator" class="turn-indicator" style="text-align: center; padding: 15px; font-size: 1.4em; font-family: 'Fredoka One', cursive; margin-bottom: 20px; border: 3px solid var(--dark-brown); animation: pulse 1.5s ease-in-out infinite; background: var(--yellow); color: var(--dark-brown);"></div>
 
-<div id="rematch-section" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--cream); border: 3px solid var(--dark-brown);">
-    <p style="font-family: 'Fredoka One', cursive; font-size: 1.1em; margin-bottom: 10px;">Play Again?</p>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn-pink" onclick="requestRematch()" style="flex: 1;">Request Rematch</button>
-        <button class="btn-white" onclick="window.location.href='{% url 'dashboard' %}'" style="flex: 1;">Back to Dashboard</button>
-    </div>
-</div>
-
-<div id="rematch-pending" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--yellow); border: 3px solid var(--dark-brown); font-family: 'Fredoka One', cursive;">
-    <p style="margin: 0; font-size: 1.1em;">Waiting for opponent to accept rematch...</p>
-</div>
-
-<div id="rematch-request" style="display: none; text-align: center; margin-bottom: 20px; padding: 15px; background: var(--turquoise); border: 3px solid var(--dark-brown); color: white; font-family: 'Fredoka One', cursive;">
-    <p style="margin-bottom: 10px; font-size: 1.1em;">Your opponent wants a rematch!</p>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn-pink" onclick="acceptRematch()" style="flex: 1;">Accept</button>
-        <button class="btn-white" onclick="declineRematch()" style="flex: 1;">Decline</button>
-    </div>
-</div>
-
 <div class="game-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--yellow); border: 3px solid var(--dark-brown); transform: rotate(0.5deg); margin-bottom: 20px;">
     <div class="cell" data-index="0" onclick="makeMove(0)"></div>
     <div class="cell" data-index="1" onclick="makeMove(1)"></div>
@@ -200,19 +180,20 @@ function updateGameUI(data) {
                 if (winningCombo) winningCombo.forEach(i => cells[i].classList.add('winning'));
             }
             localStorage.setItem('ttt_scores', JSON.stringify(scores));
+
+            setTimeout(() => {
+                autoResetGame();
+            }, 3000);
         }
-        showRematchUI(data);
     } else if (data.status === 'playing') {
         gameFinished = false;
         turnDiv.textContent = isMyTurn ? "Your Turn!" : "Opponent's Turn";
         turnDiv.classList.add(data.current_turn === 'X' ? 'x-turn' : 'o-turn');
-        hideRematchUI();
     } else {
         gameFinished = false;
         turnDiv.textContent = 'Waiting for opponent...';
         turnDiv.style.background = 'var(--yellow)';
         turnDiv.style.color = 'var(--dark-brown)';
-        hideRematchUI();
     }
 }
 
@@ -259,7 +240,6 @@ function stopPolling() {
 function showRematchUI(data) {
     console.log('showRematchUI called with data:', data);
     hideRematchUI();
-
     const isRequester = currentUser && data.rematch_requested_by && currentUser.id === data.rematch_requested_by;
     const isWinner = data.winner && data.winner === currentUser.id;
     console.log('User ID:', currentUser?.id, 'Requester ID:', data.rematch_requested_by, 'Winner ID:', data.winner);
@@ -349,6 +329,28 @@ async function declineRematch() {
         }
     } catch (err) {
         alert('Error declining rematch');
+    }
+}
+
+async function autoResetGame() {
+    try {
+        const response = await fetch(API_URL + 'rooms/auto_reset_game/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ room_code: currentRoomCode })
+        });
+        if (response.ok) {
+            gameFinished = false;
+            await loadGameState();
+            startPolling();
+        } else {
+            console.error('Auto-reset failed');
+        }
+    } catch (err) {
+        console.error('Error auto-resetting game:', err);
     }
 }
 

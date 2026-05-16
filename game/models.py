@@ -45,6 +45,9 @@ class GameRoom(models.Model):
 
     def reset_board(self):
         self.board_state = default_board_state()
+        self.current_turn = "X"
+        self.winner = None
+        self.is_draw = False
 
     def generate_unique_code(self):
         while True:

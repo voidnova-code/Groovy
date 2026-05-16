@@ -386,15 +386,14 @@ class GameRoomViewSet(viewsets.ModelViewSet):
         room.delete()
         return Response({"message": "Room deleted successfully!"})
 
-    @action(detail=False, methods=["post"], url_path="rematch/request")
-    def request_rematch(self, request):
-        """Request a rematch - loser can request"""
+    @action(detail=False, methods=["post"], url_path="auto_reset_game")
+    def auto_reset_game(self, request):
+        """Auto-reset game for next round with same opponent"""
         serializer = JoinRoomSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         room_code = serializer.validated_data["room_code"]
-
         try:
             room = GameRoom.objects.get(code=room_code)
         except GameRoom.DoesNotExist:
@@ -403,107 +402,21 @@ class GameRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Only loser or draw participant can request rematch, not winner
+        if request.user != room.player_x and request.user != room.player_o:
+            return Response(
+                {"error": "You are not in this room"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         if room.status != "finished":
             return Response(
-                {"error": "Game is not finished yet!"},
+                {"error": "Game not finished yet"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not room.is_draw and request.user == room.winner:
-            return Response(
-                {"error": "Winners don't request rematches!"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        # Check if already has a pending rematch request
-        if room.rematch_requested:
-            return Response(
-                {"error": "Rematch already requested!"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        room.rematch_requested = True
-        room.rematch_requested_by = request.user
-        room.save()
-
-        return Response(GameRoomSerializer(room).data)
-
-    @action(detail=False, methods=["post"], url_path="rematch/accept")
-    def accept_rematch(self, request):
-        """Accept a rematch request"""
-        serializer = JoinRoomSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        room_code = serializer.validated_data["room_code"]
-
-        try:
-            room = GameRoom.objects.get(code=room_code)
-        except GameRoom.DoesNotExist:
-            return Response(
-                {"error": "Room not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Only the opponent (non-requester) can accept
-        if request.user == room.rematch_requested_by:
-            return Response(
-                {"error": "You can't accept your own rematch request!"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        if not room.rematch_requested:
-            return Response(
-                {"error": "No rematch request found!"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Reset the game for rematch
         room.status = "playing"
         room.reset_board()
-        room.current_turn = "X"
-        room.winner = None
-        room.is_draw = False
-        room.rematch_requested = False
-        room.rematch_requested_by = None
         room.save()
 
-        return Response(GameRoomSerializer(room).data)
-
-    @action(detail=False, methods=["post"], url_path="rematch/decline")
-    def decline_rematch(self, request):
-        """Decline a rematch request"""
-        serializer = JoinRoomSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        room_code = serializer.validated_data["room_code"]
-
-        try:
-            room = GameRoom.objects.get(code=room_code)
-        except GameRoom.DoesNotExist:
-            return Response(
-                {"error": "Room not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Only the opponent (non-requester) can decline
-        if request.user == room.rematch_requested_by:
-            return Response(
-                {"error": "You can't decline your own rematch request!"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        if not room.rematch_requested:
-            return Response(
-                {"error": "No rematch request found!"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Clear the rematch request
-        room.rematch_requested = False
-        room.rematch_requested_by = None
-        room.save()
-
+        cache.delete(f'game_room_{room_code}')
         return Response(GameRoomSerializer(room).data)

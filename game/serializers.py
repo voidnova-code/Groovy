@@ -47,7 +47,6 @@ class GameRoomSerializer(serializers.ModelSerializer):
     player_x_username = serializers.CharField(source="player_x.username", read_only=True)
     player_o_username = serializers.CharField(source="player_o.username", read_only=True)
     winner_username = serializers.CharField(source="winner.username", read_only=True)
-    rematch_requested_by_username = serializers.CharField(source="rematch_requested_by.username", read_only=True)
 
     class Meta:
         model = GameRoom
@@ -56,7 +55,6 @@ class GameRoomSerializer(serializers.ModelSerializer):
             "player_o", "player_o_username", "status",
             "winner", "winner_username", "is_draw",
             "current_turn", "board_state", "created_at", "updated_at",
-            "rematch_requested", "rematch_requested_by", "rematch_requested_by_username"
         ]
         read_only_fields = ["id", "code", "player_x", "status", "winner", "is_draw", "board_state", "created_at", "updated_at"]
 
